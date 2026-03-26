@@ -135,7 +135,7 @@ def calc_slot_metrics(slot, deal_settings):
     acquisition_cost_override = float(deal_settings.get("acquisition_cost_override", 0.0))
 
     if use_acquisition_override:
-    total_net_acres = float(slot_inputs["net_acres"].astype(float).sum())
+        total_net_acres = float(slot_inputs["net_acres"].astype(float).sum())
 
         if total_net_acres == 0:
             acquisition_cost = 0.0
