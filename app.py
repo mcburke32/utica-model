@@ -32,7 +32,7 @@ def build_slot_template(num_slots):
     for i in range(1, num_slots + 1):
         rows.append({
             "slot_id": i,
-            "tc_name": "chestnut_farms",    # default
+            "tc_name": "Choose TC",    # default
             "lateral_length": 10000,
             "gross_wells": 2.0,
             "net_acres": 28.6,
