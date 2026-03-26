@@ -53,6 +53,30 @@ slot_df = st.data_editor(
 )
 
 # -----------------------------
+# Clean / fill blank rows
+# -----------------------------
+slot_df = slot_df.copy()
+
+default_values = {
+    "slot_id": 0,
+    "lateral_length": 10000,
+    "gross_wells": 0.0,
+    "net_acres": 0.0,
+    "bid_per_acre": 0.0,
+    "unit_acres": 800.0,
+    "pct_unitized": 0.90,
+    "net_revenue_interest": 0.80,
+    "dc_cost_per_ft": 750.0,
+}
+
+for col, default_val in default_values.items():
+    if col in slot_df.columns:
+        slot_df[col] = slot_df[col].fillna(default_val)
+
+# optional: drop fully blank rows if any sneak in
+slot_df = slot_df.dropna(how="all")
+
+# -----------------------------
 # Run model for each slot
 # -----------------------------
 results_list = []
