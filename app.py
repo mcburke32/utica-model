@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 from model import run_deal_model
 
+@st.cache_data
+def load_tc_names():
+    import pandas as pd
+    tc_metadata = pd.read_excel("type_curve_library.xlsx", sheet_name="tc_metadata")
+    return tc_metadata["tc_name"].unique().tolist()
+
+tc_names = load_tc_names()
+
 st.set_page_config(page_title="Utica Deal Model", layout="wide")
 
 st.title("Utica Deal Model")
@@ -24,6 +32,7 @@ def build_slot_template(num_slots):
     for i in range(1, num_slots + 1):
         rows.append({
             "slot_id": i,
+            "tc_name": "chestnut_farms",    # default
             "lateral_length": 10000,
             "gross_wells": 2.0,
             "net_acres": 28.6,
@@ -59,6 +68,10 @@ slot_df = st.data_editor(
     key="slot_editor",
     column_config={
         "slot_id": st.column_config.NumberColumn("Slot", format="%d"),
+        "tc_name": st.column_config.SelectboxColumn(
+            "Type Curve",
+            options=tc_names
+        ),
         "lateral_length": st.column_config.NumberColumn("Lateral Length (ft)", format="%,d"),
         "gross_wells": st.column_config.NumberColumn("Gross Wells", format="%.2f"),
         "net_acres": st.column_config.NumberColumn("Net Acres", format="%,.1f"),
