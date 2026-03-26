@@ -104,6 +104,17 @@ st.sidebar.header("Deal-Level Inputs")
 st.sidebar.subheader("Timing")
 effective_date = st.sidebar.date_input("Effective Date", value=next_month_start())
 
+use_acquisition_override = st.checkbox("Use Acquisition Cost Override", value=False)
+
+acquisition_cost_override = st.number_input(
+    "Acquisition Cost Override",
+    min_value=0.0,
+    value=0.0,
+    step=1000.0,
+    format="%.1f",
+    disabled=not use_acquisition_override
+)
+
 st.sidebar.subheader("Pricing")
 oil_price = st.sidebar.number_input("Oil Price ($/bbl)", value=60.0, step=1.0)
 gas_price = st.sidebar.number_input("Gas Price ($/mcf)", value=3.75, step=0.05)
@@ -166,6 +177,8 @@ promote_rate = st.sidebar.number_input("Promote", value=0.0625, step=0.01, forma
 promote_multiple = st.sidebar.number_input("Promote Multiple", value=1.00, step=0.05, format="%.2f", disabled=not promote_enabled)
 
 deal_inputs = {
+    "use_acquisition_override": use_acquisition_override,
+    "acquisition_cost_override": acquisition_cost_override,
     "effective_date": effective_date,
     "oil_price": oil_price,
     "gas_price": gas_price,
