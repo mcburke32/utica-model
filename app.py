@@ -49,7 +49,6 @@ with col_b:
     if st.button("Load Slots"):
         st.session_state["slot_df"] = build_slot_template(num_slots)
 
-# initialize once
 if "slot_df" not in st.session_state:
     st.session_state["slot_df"] = build_slot_template(2)
 
@@ -59,44 +58,20 @@ slot_df = st.data_editor(
     use_container_width=True,
     key="slot_editor",
     column_config={
-        "slot_id": st.column_config.NumberColumn(
-            "Slot",
-            format="%d"
-        ),
-        "lateral_length": st.column_config.NumberColumn(
-            "Lateral Length (ft)",
-            format="%,d"
-        ),
-        "gross_wells": st.column_config.NumberColumn(
-            "Gross Wells",
-            format="%.2f"
-        ),
-        "net_acres": st.column_config.NumberColumn(
-            "Net Acres",
-            format="%,.1f"
-        ),
-        "bid_per_acre": st.column_config.NumberColumn(
-            "$/Acre Bid",
-            format="$%,d"
-        ),
-        "unit_acres": st.column_config.NumberColumn(
-            "Unit Acres",
-            format="%,.0f"
-        ),
-        "pct_unitized": st.column_config.NumberColumn(
-            "% Unitized", format="%.2f"
-        ),
-        "net_revenue_interest": st.column_config.NumberColumn(
-            "NRI", format="%.2f"
-        ),
-        "dc_cost_per_ft": st.column_config.NumberColumn(
-            "D&C ($/ft)",
-            format="$%,.0f"
-        ),
+        "slot_id": st.column_config.NumberColumn("Slot", format="%d"),
+        "lateral_length": st.column_config.NumberColumn("Lateral Length (ft)", format="%,d"),
+        "gross_wells": st.column_config.NumberColumn("Gross Wells", format="%.2f"),
+        "net_acres": st.column_config.NumberColumn("Net Acres", format="%,.1f"),
+        "bid_per_acre": st.column_config.NumberColumn("$/Acre Bid", format="$%,d"),
+        "unit_acres": st.column_config.NumberColumn("Unit Acres", format="%,.0f"),
+        "pct_unitized": st.column_config.NumberColumn("% Unitized", format="%.2f"),
+        "net_revenue_interest": st.column_config.NumberColumn("NRI", format="%.2f"),
+        "dc_cost_per_ft": st.column_config.NumberColumn("D&C ($/ft)", format="$%,.0f"),
     }
 )
 
 slot_df = slot_df.copy()
+
 default_values = {
     "slot_id": 0,
     "lateral_length": 10000,
@@ -116,39 +91,18 @@ for col, default_val in default_values.items():
 st.session_state["slot_df"] = slot_df
 
 # -----------------------------
-# Slot-level results
+# Run full model
 # -----------------------------
-st.subheader("Slot-Level Results")
-
-st.dataframe(
-    results_df.style.format({
-        "acquisition_cost": "${:,.0f}",
-        "gross_capex": "${:,.0f}",
-        "gross_revenue": "${:,.0f}",
-        "net_revenue": "${:,.0f}",
-        "revenue_per_well": "${:,.0f}",
-        "working_interest": "{:.4f}",
-        "net_wells_calc": "{:.4f}",
-    }),
-    use_container_width=True
-)
+deal_df, irr, moic = run_deal_model(slot_df, deal_inputs)
 
 # -----------------------------
-# Deal rollup
+# Deal Summary
 # -----------------------------
 st.subheader("Deal Summary")
 
 total_net_acres = slot_df["net_acres"].sum()
-total_acquisition = results_df["acquisition_cost"].sum()
-
-blended_bid = (
-    total_acquisition / total_net_acres
-    if total_net_acres > 0 else 0
-)
-
-# placeholder until we wire real returns
-deal_irr = 0.25
-deal_moic = 2.0
+total_acquisition = (slot_df["net_acres"] * slot_df["bid_per_acre"]).sum()
+blended_bid = total_acquisition / total_net_acres if total_net_acres > 0 else 0
 
 col1, col2, col3, col4, col5 = st.columns(5)
 
@@ -162,10 +116,10 @@ with col3:
     st.metric("$/Acre Bid", f"${blended_bid:,.0f}")
 
 with col4:
-    st.metric("IRR", f"{deal_irr:.1%}")
+    st.metric("IRR", f"{irr:.1%}" if irr is not None else "N/A")
 
 with col5:
-    st.metric("MOIC", f"{deal_moic:.2f}x")
+    st.metric("MOIC", f"{moic:.2f}x" if moic is not None else "N/A")
 
 # -----------------------------
 # Monthly Deal Cash Flow
