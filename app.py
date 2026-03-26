@@ -106,6 +106,10 @@ st.session_state["slot_df"] = slot_df
 # -----------------------------
 # Run full model
 # -----------------------------
+if (slot_df["tc_name"] == "Choose TC").any():
+    st.warning("Please select a Type Curve for all slots")
+    st.stop()
+
 deal_df, irr, moic = run_deal_model(slot_df, deal_inputs)
 
 # -----------------------------
