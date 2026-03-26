@@ -117,15 +117,31 @@ st.dataframe(results_df, use_container_width=True, hide_index=True)
 # -----------------------------
 st.subheader("Deal Summary")
 
-deal_summary = results_df.sum(numeric_only=True)
+total_net_acres = slot_df["net_acres"].sum()
+total_acquisition = results_df["acquisition_cost"].sum()
 
-col1, col2, col3 = st.columns(3)
+blended_bid = (
+    total_acquisition / total_net_acres
+    if total_net_acres > 0 else 0
+)
+
+# placeholder until we wire real returns
+deal_irr = 0.25
+deal_moic = 2.0
+
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
-    st.metric("Total Net Revenue", f"${deal_summary['net_revenue']:,.0f}")
+    st.metric("Total Net Acres", f"{total_net_acres:,.1f}")
 
 with col2:
-    st.metric("Total Capex", f"${deal_summary['gross_capex']:,.0f}")
+    st.metric("Acquisition Price", f"${total_acquisition:,.0f}")
 
 with col3:
-    st.metric("Total Acquisition", f"${deal_summary['acquisition_cost']:,.0f}")
+    st.metric("$/Acre Bid", f"${blended_bid:,.0f}")
+
+with col4:
+    st.metric("IRR", f"{deal_irr:.1%}")
+
+with col5:
+    st.metric("MOIC", f"{deal_moic:.2f}x")
