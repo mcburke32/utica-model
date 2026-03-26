@@ -280,20 +280,20 @@ if run_model_clicked:
         st.warning("Please select a Type Curve for all slots before running the model.")
         st.session_state["model_has_run"] = False
     else:
-       all_slots_df, deal_df, slot_audit_df, deal_audit_df, irr, moic = run_deal_model(
+        all_slots_df, deal_df, slot_audit_df, deal_audit_df, irr, moic = run_deal_model(
             slot_df,
             deal_inputs
         )
-        
+
         st.subheader("Deal Monthly Audit")
         st.dataframe(deal_audit_df)
-        
+
         st.download_button(
             "Download Deal Audit CSV",
             deal_audit_df.to_csv(index=False),
             file_name="deal_audit.csv"
         )
-        
+
         st.session_state["all_slots_df"] = all_slots_df
         st.session_state["deal_df"] = deal_df
         st.session_state["irr"] = irr
