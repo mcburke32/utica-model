@@ -20,7 +20,7 @@ net_acres = st.sidebar.number_input("Net Acres", value=28.6)
 # -----------------------------
 # Run placeholder model
 # -----------------------------
-results = run_simple_model(oil_price, gas_price, wells)
+results = run_deal_model(oil_price, gas_price, wells)
 
 acquisition_cost = bid_per_acre * net_acres
 
