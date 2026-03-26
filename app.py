@@ -284,13 +284,16 @@ if run_model_clicked:
             slot_df,
             deal_inputs
         )
+        
         st.subheader("Deal Monthly Audit")
         st.dataframe(deal_audit_df)
+        
         st.download_button(
             "Download Deal Audit CSV",
             deal_audit_df.to_csv(index=False),
             file_name="deal_audit.csv"
         )
+        
         st.session_state["all_slots_df"] = all_slots_df
         st.session_state["deal_df"] = deal_df
         st.session_state["irr"] = irr
