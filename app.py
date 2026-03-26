@@ -82,10 +82,11 @@ slot_df = st.data_editor(
         ),
 
         "pct_unitized": st.column_config.NumberColumn(
-            "% Unitized", format="%.0%"),
+            "% Unitized", format="%.0%"
+        ),
 
         "net_revenue_interest": st.column_config.NumberColumn(
-            "NRI", format="%.0%"),
+            "NRI", format="%.0%"
         ),
 
         "dc_cost_per_ft": st.column_config.NumberColumn(
