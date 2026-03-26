@@ -116,32 +116,6 @@ for col, default_val in default_values.items():
 st.session_state["slot_df"] = slot_df
 
 # -----------------------------
-# Run model for each slot
-# -----------------------------
-results_list = []
-
-for _, row in slot_df.iterrows():
-    slot_inputs = {
-        **deal_inputs,
-        "gross_wells": row["gross_wells"],
-        "net_acres": row["net_acres"],
-        "bid_per_acre": row["bid_per_acre"],
-        "lateral_length": row["lateral_length"],
-        "dc_cost_per_ft": row["dc_cost_per_ft"],
-        "unit_acres": row["unit_acres"],
-        "pct_unitized": row["pct_unitized"],
-        "net_revenue_interest": row["net_revenue_interest"],
-        "flowback_delay": 4,
-        "acq_cost_override": None,
-    }
-
-    result = run_deal_model(slot_inputs)
-    result["slot_id"] = row["slot_id"]
-    results_list.append(result)
-
-results_df = pd.DataFrame(results_list)
-
-# -----------------------------
 # Slot-level results
 # -----------------------------
 st.subheader("Slot-Level Results")
@@ -192,3 +166,26 @@ with col4:
 
 with col5:
     st.metric("MOIC", f"{deal_moic:.2f}x")
+
+# -----------------------------
+# Monthly Deal Cash Flow
+# -----------------------------
+st.subheader("Monthly Deal Cash Flow")
+
+st.dataframe(
+    deal_df.style.format({
+        "oil": "{:,.0f}",
+        "gas": "{:,.0f}",
+        "ngl": "{:,.0f}",
+        "oil_rev": "${:,.0f}",
+        "gas_rev": "${:,.0f}",
+        "ngl_rev": "${:,.0f}",
+        "total_revenue": "${:,.0f}",
+        "loe": "${:,.0f}",
+        "tax": "${:,.0f}",
+        "total_cost": "${:,.0f}",
+        "cash_flow": "${:,.0f}",
+    }),
+    use_container_width=True,
+    hide_index=True
+)
