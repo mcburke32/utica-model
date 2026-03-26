@@ -57,7 +57,18 @@ slot_df = st.data_editor(
     st.session_state["slot_df"],
     num_rows="dynamic",
     use_container_width=True,
-    key="slot_editor"
+    key="slot_editor",
+    column_config={
+        "slot_id": st.column_config.NumberColumn("Slot"),
+        "lateral_length": st.column_config.NumberColumn("Lateral Length (ft)"),
+        "gross_wells": st.column_config.NumberColumn("Gross Wells"),
+        "net_acres": st.column_config.NumberColumn("Net Acres"),
+        "bid_per_acre": st.column_config.NumberColumn("$/Acre Bid"),
+        "unit_acres": st.column_config.NumberColumn("Unit Acres"),
+        "pct_unitized": st.column_config.NumberColumn("% Unitized"),
+        "net_revenue_interest": st.column_config.NumberColumn("NRI"),
+        "dc_cost_per_ft": st.column_config.NumberColumn("D&C ($/ft)"),
+    }
 )
 
 slot_df = slot_df.copy()
