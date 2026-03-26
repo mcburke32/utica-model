@@ -252,31 +252,23 @@ deal_inputs = {
 # -----------------------------
 # Slot controls
 # -----------------------------
-st.header("Slot Inputs")
+st.header("Type Curve Assumptions")
 
 tc_names = ["Choose TC"] + load_tc_names()
 
-col_a, col_b, col_c = st.columns([1, 1, 1])
+col1, col2 = st.columns([2, 1])
 
-with col_a:
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        num_slots = st.number_input("Number of Slots", min_value=1, step=1, value=1)
-    
-    with col2:
-        st.write("")
-        st.write("")
-        load_slots_clicked = st.button("Load Slots")
+with col1:
+    num_slots = st.number_input("Number of Slots", min_value=1, step=1, value=1)
 
-with col_b:
-    if st.button("Load Slots"):
-        st.session_state["slot_df"] = resize_slot_df(st.session_state["slot_df"], num_slots)
-        st.session_state["model_has_run"] = False
+with col2:
+    st.write("")
+    st.write("")
+    load_slots_clicked = st.button("Load Slots")
 
-with col_c:
-    run_model_clicked = st.button("Run Model")
-
+if load_slots_clicked:
+    st.session_state["slot_df"] = resize_slot_df(st.session_state["slot_df"], num_slots)
+    st.session_state["model_has_run"] = False
 
 slot_df = st.data_editor(
     st.session_state["slot_df"],
