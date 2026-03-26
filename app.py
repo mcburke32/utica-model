@@ -343,6 +343,7 @@ if (
     with col1:
         st.metric("Total Net Acres", f"{total_net_acres:,.1f}")
     with col2:
+        total_acquisition_cost = -deal_df["slot_asset_purchase"].sum()
         st.metric("Acquisition Cost", f"${total_acquisition_cost:,.1f}")
     with col3:
         st.metric("$/Acre Bid", f"${blended_bid:,.0f}")
