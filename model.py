@@ -198,27 +198,41 @@ def run_single_slot_economics(slot, type_curve_library, global_assumptions, slot
 
     tc_df["local_oil_price"] = oil_price + oil_diff
     tc_df["local_gas_price"] = gas_price + gas_diff
-    tc_df["local_ngl_price"] = oil_price * float(slot_ngl["ngl_pct_of_wti"]) + float(slot["ngl_diff"])
+    tc_df["local_ngl_price"] = oil_price * float(slot_ngl["ngl_pct_of_wti"])
 
-    tc_df["net_revenue"] = (
-        tc_df["local_oil_price"] * tc_df["equity_oil_production"]
-        + tc_df["local_gas_price"] * tc_df["equity_gas_production"]
-        + tc_df["local_ngl_price"] * tc_df["equity_ngl_production"]
+    # revenue breakout
+    tc_df["oil_revenue"] = tc_df["local_oil_price"] * tc_df["equity_oil_production"]
+    tc_df["gas_revenue"] = tc_df["local_gas_price"] * tc_df["equity_gas_production"]
+    tc_df["ngl_revenue"] = tc_df["local_ngl_price"] * tc_df["equity_ngl_production"]
+    tc_df["total_revenue"] = (
+        tc_df["oil_revenue"]
+        + tc_df["gas_revenue"]
+        + tc_df["ngl_revenue"]
     )
-
-    tc_df["opex"] = -(
+    
+    tc_df["opex"] = -((
         tc_df["gross_oil_production"] * oil_opex_bbl
         + tc_df["gross_gas_production"] * gas_opex_mcf
-        + tc_df["gross_ngl_production"] * ngl_opex
-    )
-
+    ) + tc_df["gross_ngl_production"] * ngl_opex)
+    
     tc_df["total_loe"] = tc_df["opex"] - fixed_loe
-
-    tc_df["tax"] = -(
-        ad_val_tax * tc_df["net_revenue"]
-        + oil_sev_tax * tc_df["equity_oil_production"]
-        + gas_sev_tax * (tc_df["equity_gas_production"] / (1.0 - float(slot_ngl["shrink"])))
+    
+    # tax breakout
+    tc_df["ad_valorem_tax"] = -(ad_val_tax * tc_df["total_revenue"])
+    tc_df["oil_severance_tax"] = -(oil_sev_tax * tc_df["equity_oil_production"])
+    tc_df["gas_severance_tax"] = -(
+        gas_sev_tax * (tc_df["equity_gas_production"] / (1.0 - float(slot_ngl["shrink"])))
     )
+    
+    tc_df["tax"] = (
+        tc_df["ad_valorem_tax"]
+        + tc_df["oil_severance_tax"]
+        + tc_df["gas_severance_tax"]
+    )
+    
+    # preserve old names so downstream code still works
+    tc_df["net_revenue"] = tc_df["total_revenue"]
+    tc_df["loe"] = tc_df["total_loe"]
 
     tc_df["period"] = tc_df["month"]
 
@@ -702,7 +716,94 @@ def prepare_slot_inputs(slot_df, deal_inputs):
 
     return df
 
+def build_slot_audit_view(all_slots_df):
+    df = all_slots_df.copy().sort_values(["slot_id", "date"]).reset_index(drop=True)
 
+    df["month_label"] = df["date"].dt.strftime("%Y-%m")
+    df["cum_slot_total_cf"] = df.groupby("slot_id")["slot_total_cash_flow"].cumsum()
+
+    audit_cols = [
+        "slot_id",
+        "tc_name",
+        "date",
+        "month_label",
+        "period",
+        "gross_wells",
+        "net_wells",
+        "working_interest",
+        "bid_price_final",
+        "acquisition_cost",
+        "slot_shrink",
+        "slot_ngl_pct_of_wti",
+
+        "slot_gross_oil_production",
+        "slot_gross_gas_production",
+        "slot_gross_ngl_production",
+        "slot_gross_boe",
+
+        "slot_net_oil_production",
+        "slot_net_gas_production",
+        "slot_net_ngl_production",
+        "slot_net_boe",
+
+        "slot_oil_revenue",
+        "slot_gas_revenue",
+        "slot_ngl_revenue",
+        "slot_total_revenue",
+
+        "slot_loe",
+        "slot_tax",
+        "slot_operating_profit",
+        "slot_capex",
+        "slot_asset_purchase",
+        "slot_promote",
+        "slot_total_cash_flow",
+        "cum_slot_total_cf",
+    ]
+
+    existing_cols = [c for c in audit_cols if c in df.columns]
+    return df[existing_cols]
+
+
+def build_deal_audit_view(deal_df):
+    df = deal_df.copy().sort_values("date").reset_index(drop=True)
+
+    df["month_num"] = np.arange(1, len(df) + 1)
+    df["month_label"] = df["date"].dt.strftime("%Y-%m")
+    df["cum_total_cf"] = df["slot_total_cash_flow"].cumsum()
+
+    audit_cols = [
+        "date",
+        "month_label",
+        "month_num",
+
+        "slot_gross_oil_production",
+        "slot_gross_gas_production",
+        "slot_gross_ngl_production",
+        "slot_gross_boe",
+
+        "slot_net_oil_production",
+        "slot_net_gas_production",
+        "slot_net_ngl_production",
+        "slot_net_boe",
+
+        "slot_oil_revenue",
+        "slot_gas_revenue",
+        "slot_ngl_revenue",
+        "slot_total_revenue",
+
+        "slot_loe",
+        "slot_tax",
+        "slot_operating_profit",
+        "slot_capex",
+        "slot_asset_purchase",
+        "slot_promote",
+        "slot_total_cash_flow",
+        "cum_total_cf",
+    ]
+
+    existing_cols = [c for c in audit_cols if c in df.columns]
+    return df[existing_cols]
 # -----------------------------
 # Main entrypoint
 # -----------------------------
@@ -722,7 +823,10 @@ def run_deal_model(slot_df, deal_inputs, type_curve_file="type_curve_library.xls
     deal_df = roll_up_deal(all_slots_df)
     deal_df = add_promote_test_columns(deal_df, deal_settings)
 
+    slot_audit_df = build_slot_audit_view(all_slots_df)
+    deal_audit_df = build_deal_audit_view(deal_df)
+
     irr = calc_financial_irr(deal_df)
     moic = calc_financial_moic(deal_df)
 
-    return all_slots_df, deal_df, irr, moic
+    return all_slots_df, deal_df, slot_audit_df, deal_audit_df, irr, moic
