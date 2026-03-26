@@ -22,10 +22,10 @@ def load_type_curve_library(file_path="type_curve_library.xlsx"):
 # Get Type Curve
 # -----------------------------
 def get_type_curve(tc_name, tc_monthly, tc_metadata):
-    tc = tc_monthly[tc_monthly["name"] == tc_name].copy()
+    tc = tc_monthly[tc_monthly["tc_name"] == tc_name].copy()
 
     base_length = tc_metadata.loc[
-        tc_metadata["name"] == tc_name, "base_lateral_length"
+        tc_metadata["tc_name"] == tc_name, "base_lateral"
     ].values[0]
 
     return tc, base_length
