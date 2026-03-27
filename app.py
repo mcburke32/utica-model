@@ -357,6 +357,26 @@ if (
     deal_df = st.session_state["deal_df"]
     irr = st.session_state["irr"]
     moic = st.session_state["moic"]
+    deal_audit_df = st.session_state["deal_audit_df"]
+    slot_audit_df = st.session_state["slot_audit_df"]
+
+    deal_audit_display_df = format_display_df(deal_audit_df)
+    slot_audit_display_df = format_display_df(slot_audit_df)
+    audit_excel_data = to_excel_bytes(deal_audit_df, slot_audit_df)
+    
+    with st.expander("Monthly Data", expanded=False):
+        st.subheader("Total Deal Monthly Data")
+        st.dataframe(deal_audit_display_df)
+    
+        st.subheader("Type Curve Monthly Data")
+        st.dataframe(slot_audit_display_df)
+    
+        st.download_button(
+            "Download in Excel",
+            audit_excel_data,
+            file_name="deal_audit.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     st.subheader("Deal Summary")
 
