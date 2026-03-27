@@ -303,10 +303,10 @@ slot_df = st.data_editor(
     },
 ).copy()
 
-slot_df["slot_id"] = range(1, len(slot_df) + 1)
 st.session_state["slot_df"] = slot_df
 
-run_model_clicked = st.button("Run Model")
+if st.button("Run Model"):
+    st.session_state["slot_df"] = slot_df  # force save latest edits
 # -----------------------------
 # Run only on button
 # -----------------------------
