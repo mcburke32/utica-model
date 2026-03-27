@@ -233,6 +233,7 @@ def build_heatmap(df, title, value_format):
     )
 
     return fig
+
 def format_heatmap_axes(fig, df):
     fig.update_xaxes(
         tickmode="array",
