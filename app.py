@@ -17,21 +17,24 @@ def pretty_column_name(col):
         "date": "Date",
         "slot_id": "Slot ID",
         "tc_name": "Type Curve",
-        "net_oil": "Net Oil Production",
-        "net_gas": "Net Gas Production",
-        "net_ngl": "Net NGL Production",
-        "net_oil_revenue": "Net Oil Revenue",
-        "net_gas_revenue": "Net Gas Revenue",
-        "net_ngl_revenue": "Net NGL Revenue",
-        "total_revenue": "Total Revenue",
-        "total_loe": "Total LOE",
-        "total_tax": "Total Tax",
-        "operating_profit": "Operating Profit",
-        "capex": "Capex",
-        "acquisition": "Acquisition",
-        "promote": "Promote",
-        "total_cash_flow": "Total Cash Flow",
-        "cum_total_cash_flow": "Cumulative Total Cash Flow",
+
+        "slot_net_oil_production": "Net Oil Production",
+        "slot_net_gas_production": "Net Gas Production",
+        "slot_net_ngl_production": "Net NGL Production",
+
+        "slot_oil_revenue": "Net Oil Revenue",
+        "slot_gas_revenue": "Net Gas Revenue",
+        "slot_ngl_revenue": "Net NGL Revenue",
+
+        "slot_total_revenue": "Total Revenue",
+        "slot_loe": "Total LOE",
+        "slot_tax": "Total Tax",
+        "slot_operating_profit": "Operating Profit",
+        "slot_capex": "Capex",
+        "slot_asset_purchase": "Acquisition",
+        "slot_promote": "Promote",
+        "slot_total_cash_flow": "Total Cash Flow",
+        "cum_total_cf": "Cumulative Total Cash Flow",
     }
 
     return name_map.get(col, col.replace("_", " ").title())
@@ -457,6 +460,54 @@ if (
         [col for col in SLOT_DISPLAY_COLS if col in slot_audit_df.columns]
     ].copy()
 
+    DEAL_DISPLAY_COLS = [
+        "date",
+        "slot_net_oil_production",
+        "slot_net_gas_production",
+        "slot_net_ngl_production",
+        "slot_oil_revenue",
+        "slot_gas_revenue",
+        "slot_ngl_revenue",
+        "slot_total_revenue",
+        "slot_loe",
+        "slot_tax",
+        "slot_operating_profit",
+        "slot_capex",
+        "slot_asset_purchase",
+        "slot_promote",
+        "slot_total_cash_flow",
+        "cum_total_cf",
+    ]
+    
+    SLOT_DISPLAY_COLS = [
+        "slot_id",
+        "tc_name",
+        "date",
+        "slot_net_oil_production",
+        "slot_net_gas_production",
+        "slot_net_ngl_production",
+        "slot_oil_revenue",
+        "slot_gas_revenue",
+        "slot_ngl_revenue",
+        "slot_total_revenue",
+        "slot_loe",
+        "slot_tax",
+        "slot_operating_profit",
+        "slot_capex",
+        "slot_asset_purchase",
+        "slot_promote",
+        "slot_total_cash_flow",
+        "cum_total_cf",
+    ]
+    
+    deal_display_df = deal_audit_df[
+        [col for col in DEAL_DISPLAY_COLS if col in deal_audit_df.columns]
+    ].copy()
+    
+    slot_display_df = slot_audit_df[
+        [col for col in SLOT_DISPLAY_COLS if col in slot_audit_df.columns]
+    ].copy()
+    
     deal_audit_display_df = format_display_df(deal_display_df)
     slot_audit_display_df = format_display_df(slot_display_df)
 
