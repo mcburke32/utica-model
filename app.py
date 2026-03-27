@@ -657,8 +657,8 @@ if (
     irr_heatmap = build_heatmap(irr_sens_df, "IRR Sensitivity", metric="irr")
     moic_heatmap = build_heatmap(moic_sens_df, "MOIC Sensitivity", metric="moic")
 
-    with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid Sensitivity", expanded=True):
-    
+   with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid Sensitivity", expanded=True):
+
         col1, col2 = st.columns(2)
     
         with col1:
