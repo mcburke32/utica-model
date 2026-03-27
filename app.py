@@ -9,6 +9,7 @@ st.title("Utica Deal Model")
 
 from io import BytesIO
 
+import plotly.express as px
 # -----------------------------
 # Helpers
 # -----------------------------
@@ -186,6 +187,52 @@ def format_moic_table(df):
             lambda x: f"{x:.2f}x" if pd.notnull(x) else ""
         )
     return formatted
+
+def format_sensitivity_headers(df):
+    formatted = df.copy()
+    formatted.index = [f"${int(x):,}" for x in formatted.index]
+    formatted.columns = [f"${int(x):,}" for x in formatted.columns]
+    return formatted
+
+
+def format_irr_table(df):
+    formatted = df.copy()
+    for col in formatted.columns:
+        formatted[col] = formatted[col].map(
+            lambda x: f"{x:.2%}" if pd.notnull(x) else ""
+        )
+    return formatted
+
+
+def format_moic_table(df):
+    formatted = df.copy()
+    for col in formatted.columns:
+        formatted[col] = formatted[col].map(
+            lambda x: f"{x:.2f}x" if pd.notnull(x) else ""
+        )
+    return formatted
+
+def build_heatmap(df, title, value_format):
+    heatmap_df = df.copy()
+
+    fig = px.imshow(
+        heatmap_df,
+        text_auto=value_format,
+        aspect="auto",
+        labels={
+            "x": "$/Acre Bid",
+            "y": "D&C Costs ($/ft)",
+            "color": title,
+        },
+        title=title,
+    )
+
+    fig.update_layout(
+        xaxis_title="$/Acre Bid",
+        yaxis_title="D&C Costs ($/ft)",
+    )
+
+    return fig
 # -----------------------------
 # Session state init
 # -----------------------------
@@ -605,8 +652,17 @@ if (
     
     st.subheader("Sensitivity Tables")
 
-    base_dc = deal_inputs["dc_override"] if deal_inputs["use_dc_override"] else float(slot_df["dc_costs"].mean())
-    base_bid = deal_inputs["bid_override"] if deal_inputs["use_bid_override"] else float(slot_df["bid_per_acre"].mean())
+    base_dc = (
+        deal_inputs["dc_override"]
+        if deal_inputs["use_dc_override"]
+        else float(slot_df["dc_costs"].mean())
+    )
+
+    base_bid = (
+        deal_inputs["bid_override"]
+        if deal_inputs["use_bid_override"]
+        else float(slot_df["bid_per_acre"].mean())
+    )
 
     irr_sens_df, moic_sens_df = run_bid_dc_sensitivity(
         slot_df=slot_df,
@@ -615,14 +671,26 @@ if (
         base_bid=base_bid,
     )
 
-    irr_sens_display = format_irr_table(irr_sens_df)
-    moic_sens_display = format_moic_table(moic_sens_df)
+    irr_sens_display = format_sensitivity_headers(irr_sens_df)
+    irr_sens_display = format_irr_table(irr_sens_display)
 
-    with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid", expanded=True):
-        st.markdown("**IRR Sensitivity**")
+    moic_sens_display = format_sensitivity_headers(moic_sens_df)
+    moic_sens_display = format_moic_table(moic_sens_display)
+
+    irr_heatmap = build_heatmap(irr_sens_df, "IRR", ".2%")
+    moic_heatmap = build_heatmap(moic_sens_df, "MOIC", ".2f")
+
+    with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid Sensitivity", expanded=True):
+        st.markdown("### IRR Sensitivity")
+        st.markdown("**Columns:** $/Acre Bid")
+        st.markdown("**Rows:** D&C Costs ($/ft)")
         st.dataframe(irr_sens_display, use_container_width=True)
+        st.plotly_chart(irr_heatmap, use_container_width=True)
 
-        st.markdown("**MOIC Sensitivity**")
+        st.markdown("### MOIC Sensitivity")
+        st.markdown("**Columns:** $/Acre Bid")
+        st.markdown("**Rows:** D&C Costs ($/ft)")
         st.dataframe(moic_sens_display, use_container_width=True)
+        st.plotly_chart(moic_heatmap, use_container_width=True)
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
