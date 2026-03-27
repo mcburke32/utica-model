@@ -191,61 +191,71 @@ def format_moic_table(df):
         )
     return formatted
 
-def build_heatmap(df, title, is_irr=False):
+import plotly.graph_objects as go
+
+def build_heatmap(df, title, metric="irr"):
     heatmap_df = df.T.copy()
 
-    if is_irr:
+    x_vals = [f"${int(x):,}" for x in heatmap_df.columns]   # D&C on top
+    y_vals = [f"${int(x):,}" for x in heatmap_df.index]     # $/Acre on left
+
+    if metric == "irr":
+        text_vals = heatmap_df.applymap(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
+        zmin = 0.0
+        zmax = max(0.40, float(heatmap_df.max().max()))
+
+        # <15% red, 15-25% yellow, >25% green
         colorscale = [
             [0.00, "rgb(255,180,180)"],
-            [0.15, "rgb(255,180,180)"],
-            [0.15, "rgb(255,255,204)"],
-            [0.25, "rgb(255,255,204)"],
-            [0.25, "rgb(214,232,202)"],
+            [0.15 / zmax, "rgb(255,180,180)"],
+            [0.15 / zmax, "rgb(255,255,204)"],
+            [0.25 / zmax, "rgb(255,255,204)"],
+            [0.25 / zmax, "rgb(214,232,202)"],
             [1.00, "rgb(214,232,202)"],
         ]
+        colorbar_title = "IRR"
 
-        fig = px.imshow(
-            heatmap_df,
-            text_auto=".2%",
-            aspect="auto",
-            color_continuous_scale=colorscale,
-            zmin=0.0,
-            zmax=max(0.40, float(heatmap_df.max().max())),
-            labels={
-                "x": "D&C Costs ($/ft)",
-                "y": "$/Acre Bid",
-                "color": "IRR",
-            },
-            title=title,
+    elif metric == "moic":
+        text_vals = heatmap_df.applymap(lambda x: f"{x:.2f}x" if pd.notnull(x) else "")
+        zmin = float(heatmap_df.min().min())
+        zmax = float(heatmap_df.max().max())
+
+        # ASSUMED MOIC bands:
+        # <1.5x red, 1.5x-2.0x yellow, >2.0x green
+        # Change these two numbers if you want different cutoffs
+        low_cut = 1.50
+        high_cut = 2.00
+
+        colorscale = [
+            [0.00, "rgb(255,180,180)"],
+            [(low_cut - zmin) / (zmax - zmin) if zmax > zmin else 0.33, "rgb(255,180,180)"],
+            [(low_cut - zmin) / (zmax - zmin) if zmax > zmin else 0.33, "rgb(255,255,204)"],
+            [(high_cut - zmin) / (zmax - zmin) if zmax > zmin else 0.66, "rgb(255,255,204)"],
+            [(high_cut - zmin) / (zmax - zmin) if zmax > zmin else 0.66, "rgb(214,232,202)"],
+            [1.00, "rgb(214,232,202)"],
+        ]
+        colorbar_title = "MOIC"
+
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=heatmap_df.values,
+            x=x_vals,
+            y=y_vals,
+            text=text_vals.values,
+            texttemplate="%{text}",
+            colorscale=colorscale,
+            zmin=zmin,
+            zmax=zmax,
+            colorbar=dict(title=colorbar_title),
+            hovertemplate="D&C: %{x}<br>$/Acre: %{y}<br>Value: %{text}<extra></extra>",
         )
-    else:
-        fig = px.imshow(
-            heatmap_df,
-            text_auto=".2f",
-            aspect="auto",
-            labels={
-                "x": "D&C Costs ($/ft)",
-                "y": "$/Acre Bid",
-                "color": "MOIC",
-            },
-            title=title,
-        )
+    )
 
     fig.update_layout(
+        title=title,
         xaxis_title="D&C Costs ($/ft)",
         yaxis_title="$/Acre Bid",
-    )
-
-    fig.update_xaxes(
-        tickmode="array",
-        tickvals=list(range(len(heatmap_df.columns))),
-        ticktext=[f"${int(x):,}" for x in heatmap_df.columns]
-    )
-
-    fig.update_yaxes(
-        tickmode="array",
-        tickvals=list(range(len(heatmap_df.index))),
-        ticktext=[f"${int(x):,}" for x in heatmap_df.index]
+        xaxis=dict(side="top"),
     )
 
     return fig
