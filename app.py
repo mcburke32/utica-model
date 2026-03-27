@@ -352,7 +352,7 @@ if (
     st.session_state["model_has_run"]
     and st.session_state["deal_df"] is not None
     and st.session_state["all_slots_df"] is not None
-    ):
+):
     all_slots_df = st.session_state["all_slots_df"]
     deal_df = st.session_state["deal_df"]
     irr = st.session_state["irr"]
@@ -375,8 +375,8 @@ if (
             "Download in Excel",
             audit_excel_data,
             file_name="deal_audit.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            key="monthly_data_download_excel"
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="monthly_data_download_excel",
         )
 
     st.subheader("Deal Summary")
