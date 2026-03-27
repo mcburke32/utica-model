@@ -305,12 +305,11 @@ slot_df = st.data_editor(
 
 st.session_state["slot_df"] = slot_df
 
-if st.button("Run Model"):
-    st.session_state["slot_df"] = slot_df  # force save latest edits
-# -----------------------------
-# Run only on button
-# -----------------------------
+run_model_clicked = st.button("Run Model")
+
 if run_model_clicked:
+    st.session_state["slot_df"] = slot_df  # save latest edits
+
     if (slot_df["tc_name"] == "Choose TC").any():
         st.warning("Please select a Type Curve for all slots before running the model.")
         st.session_state["model_has_run"] = False
@@ -327,7 +326,6 @@ if run_model_clicked:
         st.session_state["irr"] = irr
         st.session_state["moic"] = moic
         st.session_state["model_has_run"] = True
-
 
 # -----------------------------
 # Results
