@@ -618,7 +618,7 @@ if (
     irr_sens_display = format_irr_table(irr_sens_df)
     moic_sens_display = format_moic_table(moic_sens_df)
 
-    with st.expander("$/Acre Bid vs D&C $/ft", expanded=True):
+    with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid", expanded=True):
         st.markdown("**IRR Sensitivity**")
         st.dataframe(irr_sens_display, use_container_width=True)
 
