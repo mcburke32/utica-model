@@ -255,7 +255,7 @@ def build_heatmap(df, title, metric="irr"):
             colorscale=colorscale,
             zmin=zmin,
             zmax=zmax,
-            colorbar=dict(title=colorbar_title),
+            showscale=False,
             hovertemplate="D&C: %{x}<br>$/Acre: %{y}<br>Value: %{text}<extra></extra>",
         )
     )
@@ -659,13 +659,8 @@ if (
 
     with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid Sensitivity", expanded=True):
         st.markdown("### IRR Sensitivity")
-        st.markdown("**Top Axis:** D&C Costs ($/ft)")
-        st.markdown("**Left Axis:** $/Acre Bid")
         st.plotly_chart(irr_heatmap, use_container_width=True)
-
         st.markdown("### MOIC Sensitivity")
-        st.markdown("**Top Axis:** D&C Costs ($/ft)")
-        st.markdown("**Left Axis:** $/Acre Bid")
         st.plotly_chart(moic_heatmap, use_container_width=True)
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
