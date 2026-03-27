@@ -10,6 +10,7 @@ st.title("Utica Deal Model")
 from io import BytesIO
 
 import plotly.express as px
+import plotly.graph_objects as go
 # -----------------------------
 # Helpers
 # -----------------------------
@@ -645,8 +646,8 @@ if (
         base_bid=base_bid,
     )
 
-    irr_heatmap = build_heatmap(irr_sens_df, "IRR Sensitivity", is_irr=True)
-    moic_heatmap = build_heatmap(moic_sens_df, "MOIC Sensitivity", is_irr=False)
+    irr_heatmap = build_heatmap(irr_sens_df, "IRR Sensitivity", metric="irr")
+    moic_heatmap = build_heatmap(moic_sens_df, "MOIC Sensitivity", metric="moic")
 
     with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid Sensitivity", expanded=True):
         st.markdown("### IRR Sensitivity")
