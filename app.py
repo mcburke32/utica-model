@@ -662,7 +662,7 @@ if (
 
     bid_values = build_sensitivity_range(base_bid, 500.0, 3)
 
-    oil_values = [55, 60, 65, 70]
+    oil_values = [50, 55, 60, 65, 70]
     gas_values = [3.25, 3.50, 3.75, 4.00, 4.25]
 
     irr_oil_bid_df, moic_oil_bid_df = run_oil_bid_sensitivity(
