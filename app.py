@@ -9,7 +9,6 @@ st.title("Utica Deal Model")
 
 from io import BytesIO
 
-import plotly.express as px
 import plotly.graph_objects as go
 # -----------------------------
 # Helpers
@@ -165,32 +164,6 @@ def run_bid_dc_sensitivity(slot_df, deal_inputs, base_dc, base_bid):
 
     return irr_table, moic_table
 
-def format_sensitivity_headers(df):
-    formatted = df.copy()
-    formatted.index = [f"${int(x):,}" for x in formatted.index]
-    formatted.columns = [f"${int(x):,}" for x in formatted.columns]
-    return formatted
-
-def run_oil_gas_sensitivity(slot_df, deal_inputs, oil_values, gas_values):
-    irr_table = pd.DataFrame(index=oil_values, columns=gas_values, dtype=float)
-    moic_table = pd.DataFrame(index=oil_values, columns=gas_values, dtype=float)
-
-    for oil in oil_values:
-        for gas in gas_values:
-            sens_deal_inputs = deal_inputs.copy()
-            sens_deal_inputs["oil_price"] = float(oil)
-            sens_deal_inputs["gas_price"] = float(gas)
-
-            try:
-                _, _, _, _, irr, moic = run_deal_model(slot_df.copy(), sens_deal_inputs)
-                irr_table.loc[oil, gas] = irr
-                moic_table.loc[oil, gas] = moic
-            except Exception:
-                irr_table.loc[oil, gas] = None
-                moic_table.loc[oil, gas] = None
-
-    return irr_table, moic_table
-
 def run_oil_bid_sensitivity(slot_df, deal_inputs, oil_values, bid_values):
     irr_table = pd.DataFrame(index=oil_values, columns=bid_values, dtype=float)
     moic_table = pd.DataFrame(index=oil_values, columns=bid_values, dtype=float)
@@ -234,22 +207,6 @@ def run_gas_bid_sensitivity(slot_df, deal_inputs, gas_values, bid_values):
 
     return irr_table, moic_table
 
-def format_irr_table(df):
-    formatted = df.copy()
-    for col in formatted.columns:
-        formatted[col] = formatted[col].map(
-            lambda x: f"{x:.2%}" if pd.notnull(x) else ""
-        )
-    return formatted
-
-
-def format_moic_table(df):
-    formatted = df.copy()
-    for col in formatted.columns:
-        formatted[col] = formatted[col].map(
-            lambda x: f"{x:.2f}x" if pd.notnull(x) else ""
-        )
-    return formatted
 
 import plotly.graph_objects as go
 
@@ -329,20 +286,6 @@ def build_heatmap(df, title, metric="irr", x_title="D&C Costs ($/ft)", y_title="
 
     return fig
 
-def format_heatmap_axes(fig, df):
-    fig.update_xaxes(
-        tickmode="array",
-        tickvals=list(range(len(df.columns))),
-        ticktext=[f"${int(x):,}" for x in df.columns]
-    )
-
-    fig.update_yaxes(
-        tickmode="array",
-        tickvals=list(range(len(df.index))),
-        ticktext=[f"${int(x):,}" for x in df.index]
-    )
-
-    return fig
 # -----------------------------
 # Session state init
 # -----------------------------
@@ -717,9 +660,9 @@ if (
     irr_heatmap = build_heatmap(irr_sens_df, "IRR Sensitivity", metric="irr")
     moic_heatmap = build_heatmap(moic_sens_df, "MOIC Sensitivity", metric="moic")
 
-      bid_values = build_sensitivity_range(base_bid, 500.0, 3)
+    bid_values = build_sensitivity_range(base_bid, 500.0, 3)
 
-    oil_values = [50, 55, 60, 65, 70]
+    oil_values = [55, 60, 65, 70]
     gas_values = [3.25, 3.50, 3.75, 4.00, 4.25]
 
     irr_oil_bid_df, moic_oil_bid_df = run_oil_bid_sensitivity(
@@ -768,7 +711,18 @@ if (
         y_title="Gas Price ($/mcf)",
     )
 
-    with st.expander("Oil Price vs. $/Acre Bid Sensitivity", expanded=False):
+    with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid Sensitivity", expanded=True):
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("### IRR Sensitivity")
+            st.plotly_chart(irr_heatmap, use_container_width=True)
+
+        with col2:
+            st.markdown("### MOIC Sensitivity")
+            st.plotly_chart(moic_heatmap, use_container_width=True)
+
+    with st.expander("Oil Price vs. \$/Acre Bid Sensitivity", expanded=False):
         col1, col2 = st.columns(2)
 
         with col1:
@@ -779,7 +733,7 @@ if (
             st.markdown("### MOIC Sensitivity")
             st.plotly_chart(moic_oil_bid_heatmap, use_container_width=True)
 
-    with st.expander("Gas Price vs. $/Acre Bid Sensitivity", expanded=False):
+    with st.expander("Gas Price vs. \$/Acre Bid Sensitivity", expanded=False):
         col1, col2 = st.columns(2)
 
         with col1:
@@ -789,6 +743,5 @@ if (
         with col2:
             st.markdown("### MOIC Sensitivity")
             st.plotly_chart(moic_gas_bid_heatmap, use_container_width=True)
-
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
