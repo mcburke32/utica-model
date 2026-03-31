@@ -341,8 +341,11 @@ def build_heatmap(
             x_vals_raw = list(heatmap_df.columns)
             y_vals_raw = list(heatmap_df.index)
 
-            x_idx = x_vals_raw.index(base_x)
-            y_idx = y_vals_raw.index(base_y)
+            def find_closest_index(values, target):
+                return min(range(len(values)), key=lambda i: abs(float(values[i]) - float(target)))
+            
+            x_idx = find_closest_index(x_vals_raw, base_x)
+            y_idx = find_closest_index(y_vals_raw, base_y)
 
             fig.add_shape(
                 type="rect",
@@ -751,6 +754,8 @@ if (
 
     bid_values = build_sensitivity_range(base_bid, 500.0, 3)
 
+    tc_risk_values = [0.70, 0.80, 0.90, 1.00, 1.10, 1.20, 1.30]
+    
     oil_values = [50, 55, 60, 65, 70]
     gas_values = [3.25, 3.50, 3.75, 4.00, 4.25]
 
@@ -774,14 +779,18 @@ if (
         metric="irr",
         x_title="Oil Price ($/bbl)",
         y_title="$/Acre Bid",
+        base_x=deal_inputs["oil_price"],
+        base_y=base_bid,
     )
-
+    
     moic_oil_bid_heatmap = build_heatmap(
         moic_oil_bid_df,
         "MOIC Sensitivity",
         metric="moic",
         x_title="Oil Price ($/bbl)",
         y_title="$/Acre Bid",
+        base_x=deal_inputs["oil_price"],
+        base_y=base_bid,
     )
 
     irr_gas_bid_heatmap = build_heatmap(
@@ -790,15 +799,19 @@ if (
         metric="irr",
         x_title="Gas Price ($/mcf)",
         y_title="$/Acre Bid",
+        base_x=deal_inputs["gas_price"],
+        base_y=base_bid,
     )
-
+    
     moic_gas_bid_heatmap = build_heatmap(
         moic_gas_bid_df,
         "MOIC Sensitivity",
         metric="moic",
         x_title="Gas Price ($/mcf)",
         y_title="$/Acre Bid",
-    )
+        base_x=deal_inputs["gas_price"],
+        base_y=base_bid,
+    )   
 
     with st.expander("D&C Costs (\$/ft) vs. \$/Acre Bid Sensitivity", expanded=True):
         col1, col2 = st.columns(2)
@@ -832,9 +845,7 @@ if (
         with col2:
             st.markdown("### MOIC Sensitivity")
             st.plotly_chart(moic_gas_bid_heatmap, use_container_width=True)
-
-        tc_risk_values = [0.70, 0.80, 0.90, 1.00, 1.10, 1.20, 1.30]
-
+    
     irr_tcrisk_bid_df, moic_tcrisk_bid_df = run_tcrisk_bid_sensitivity(
         slot_df=slot_df,
         deal_inputs=deal_inputs,
@@ -842,6 +853,8 @@ if (
         bid_values=bid_values,
     )
 
+    base_tc_risk = float(slot_df["tc_risk"].iloc[0])
+    
     irr_tcrisk_bid_heatmap = build_heatmap(
         irr_tcrisk_bid_df,
         "IRR Sensitivity",
@@ -850,8 +863,10 @@ if (
         y_title="$/Acre Bid",
         x_format="percent",
         y_format="dollar",
+        base_x=base_tc_risk,
+        base_y=base_bid,
     )
-
+    
     moic_tcrisk_bid_heatmap = build_heatmap(
         moic_tcrisk_bid_df,
         "MOIC Sensitivity",
@@ -860,6 +875,8 @@ if (
         y_title="$/Acre Bid",
         x_format="percent",
         y_format="dollar",
+        base_x=base_tc_risk,
+        base_y=base_bid,
     )
 
     with st.expander("TC Risk vs. \$/Acre Bid Sensitivity", expanded=False):
