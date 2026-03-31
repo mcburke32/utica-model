@@ -142,9 +142,9 @@ def build_sensitivity_range(base_value, step, steps_each_way=3):
 def run_bid_dc_sensitivity(slot_df, deal_inputs, base_dc, base_bid):
     dc_values = build_sensitivity_range(base_dc, 50.0, 3)
     bid_values = build_sensitivity_range(base_bid, 500.0, 3)
-
-    irr_table = pd.DataFrame(index=dc_values, columns=bid_values, dtype=float)
-    moic_table = pd.DataFrame(index=dc_values, columns=bid_values, dtype=float)
+    
+    irr_table = pd.DataFrame(index=bid_values, columns=dc_values)
+    moic_table = pd.DataFrame(index=bid_values, columns=dc_values)
 
     for dc in dc_values:
         for bid in bid_values:
