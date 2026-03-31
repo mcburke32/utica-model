@@ -165,8 +165,8 @@ def run_bid_dc_sensitivity(slot_df, deal_inputs, base_dc, base_bid):
     return irr_table, moic_table
 
 def run_oil_bid_sensitivity(slot_df, deal_inputs, oil_values, bid_values):
-    irr_table = pd.DataFrame(index=oil_values, columns=bid_values, dtype=float)
-    moic_table = pd.DataFrame(index=oil_values, columns=bid_values, dtype=float)
+    irr_table = pd.DataFrame(index=bid_values, columns=oil_values)
+    moic_table = pd.DataFrame(index=bid_values, columns=oil_values)
 
     for oil in oil_values:
         for bid in bid_values:
@@ -177,18 +177,18 @@ def run_oil_bid_sensitivity(slot_df, deal_inputs, oil_values, bid_values):
 
             try:
                 _, _, _, _, irr, moic = run_deal_model(slot_df.copy(), sens_deal_inputs)
-                irr_table.loc[oil, bid] = irr
-                moic_table.loc[oil, bid] = moic
+                irr_table.loc[bid, oil] = irr
+                moic_table.loc[bid, oil] = moic
             except Exception:
-                irr_table.loc[oil, bid] = None
-                moic_table.loc[oil, bid] = None
+                irr_table.loc[bid, oil] = None
+                moic_table.loc[bid, oil] = None
 
     return irr_table, moic_table
 
 
 def run_gas_bid_sensitivity(slot_df, deal_inputs, gas_values, bid_values):
-    irr_table = pd.DataFrame(index=gas_values, columns=bid_values, dtype=float)
-    moic_table = pd.DataFrame(index=gas_values, columns=bid_values, dtype=float)
+    irr_table = pd.DataFrame(index=bid_values, columns=gas_values)
+    moic_table = pd.DataFrame(index=bid_values, columns=gas_values)
 
     for gas in gas_values:
         for bid in bid_values:
@@ -199,11 +199,11 @@ def run_gas_bid_sensitivity(slot_df, deal_inputs, gas_values, bid_values):
 
             try:
                 _, _, _, _, irr, moic = run_deal_model(slot_df.copy(), sens_deal_inputs)
-                irr_table.loc[gas, bid] = irr
-                moic_table.loc[gas, bid] = moic
+                irr_table.loc[bid, gas] = irr
+                moic_table.loc[bid, gas] = moic
             except Exception:
-                irr_table.loc[gas, bid] = None
-                moic_table.loc[gas, bid] = None
+                irr_table.loc[bid, gas] = None
+                moic_table.loc[bid, gas] = None
 
     return irr_table, moic_table
 
@@ -211,7 +211,7 @@ def run_gas_bid_sensitivity(slot_df, deal_inputs, gas_values, bid_values):
 import plotly.graph_objects as go
 
 def build_heatmap(df, title, metric="irr", x_title="D&C Costs ($/ft)", y_title="$/Acre Bid"):
-    heatmap_df = df.T.copy()
+    heatmap_df = df.copy()
 
     x_vals = [f"${int(x):,}" if float(x).is_integer() else f"${x:,.2f}" for x in heatmap_df.columns]
     y_vals = [f"${int(y):,}" if float(y).is_integer() else f"${y:,.2f}" for y in heatmap_df.index]
