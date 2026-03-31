@@ -276,10 +276,17 @@ def build_heatmap(df, title, metric="irr", x_title="D&C Costs ($/ft)", y_title="
 
     fig.update_layout(
         title=title,
-        xaxis_title=x_title,
-        yaxis_title=y_title,
-        xaxis=dict(side="top", type="category", automargin=True),
-        yaxis=dict(type="category", automargin=True),
+        xaxis=dict(
+            title=x_title,
+            side="top",            # puts axis at top
+            type="category",
+            automargin=True,
+        ),
+        yaxis=dict(
+            title=y_title,         # keeps title on LEFT
+            type="category",
+            automargin=True,
+        ),
         margin=dict(l=90, r=20, t=60, b=50),
         height=360,
     )
