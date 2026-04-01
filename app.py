@@ -525,7 +525,7 @@ def build_quarterly_output_table(deal_df, all_slots_df, slot_df, deal_inputs):
 
 
 def format_quarterly_output_table(df):
-    formatted = df.copy()
+    formatted = df.copy().astype(object)
 
     pct_rows = {
         "Realized Pricing - NGL (% of WTI)",
