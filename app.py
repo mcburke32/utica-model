@@ -262,7 +262,7 @@ def build_heatmap(
         return max(0.0, min(1.0, x))
 
     if metric == "irr":
-        text_vals = heatmap_df.applymap(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
+        text_vals = heatmap_df.map(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
         zmin = 0.0
         zmax = max(0.40, float(heatmap_df.max().max()))
 
@@ -282,7 +282,7 @@ def build_heatmap(
         ]
 
     elif metric == "moic":
-        text_vals = heatmap_df.applymap(lambda x: f"{x:.2f}x" if pd.notnull(x) else "")
+        text_vals = heatmap_df.map(lambda x: f"{x:.2f}x" if pd.notnull(x) else "")
         zmin = min(0.0, float(heatmap_df.min().min()))
         zmax = max(2.0, float(heatmap_df.max().max()))
 
