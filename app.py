@@ -557,7 +557,9 @@ def format_quarterly_output_table(df):
         for col in formatted.columns:
             val = formatted.loc[idx, col]
 
-            if pd.isnull(val):
+            if col == " ":
+                formatted.loc[idx, col] = ""
+            elif pd.isnull(val):
                 formatted.loc[idx, col] = "-"
             elif idx in pct_rows:
                 formatted.loc[idx, col] = f"{val:.0%}"
