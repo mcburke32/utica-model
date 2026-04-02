@@ -1133,7 +1133,7 @@ deal_inputs = {
 # -----------------------------
 # Slot controls
 # -----------------------------
-st.header("Type Curve Assumptions")
+st.subheader("Type Curve Assumptions")
 
 tc_names = ["Choose TC"] + load_tc_names()
 
