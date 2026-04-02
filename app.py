@@ -1223,68 +1223,6 @@ slot_df = st.data_editor(
     },
 ).copy()
 
-slot_df = st.data_editor(
-    slot_df_display,
-    num_rows="fixed",
-    use_container_width=True,
-    key="slot_editor",
-    column_config={
-        "slot_id": st.column_config.NumberColumn("Slot", format="%d", disabled=True),
-        "tc_name": st.column_config.SelectboxColumn("Type Curve", options=tc_names, required=True),
-        "gross_wells": st.column_config.NumberColumn("Gross Wells", format="%.2f"),
-        "net_acres": st.column_config.NumberColumn("Net Acres", format="%,.1f"),
-        "unit_acres": st.column_config.NumberColumn("Unit Acres", format="%,.0f"),
-        "use_calc_unit_acres": st.column_config.CheckboxColumn("Calc Unit Acres"),
-        "pct_unitized": st.column_config.NumberColumn("% Unitized", format="%.2f"),
-        "drilling_spud_month": st.column_config.DateColumn("Spud Month", format="YYYY-MM-DD"),
-        "flowback_delay": st.column_config.NumberColumn("Flowback Delay", format="%d"),
-        "net_revenue_interest": st.column_config.NumberColumn("NRI", format="%.2f"),
-        "lateral_length": st.column_config.NumberColumn("Lateral Length (ft)", format="%,d"),
-        "dc_costs": st.column_config.NumberColumn("D&C ($/ft)", format="$%,.0f"),
-        "tc_risk": st.column_config.NumberColumn("TC Risk", format="%.2f"),
-        "bid_per_acre": st.column_config.NumberColumn("$/Acre Bid", format="$%,d"),
-        "oil_diff": st.column_config.NumberColumn("Oil Diff", format="$%.2f"),
-        "gas_diff": st.column_config.NumberColumn("Gas Diff", format="$%.2f"),
-        "ngl_diff": None,
-        "oil_opex_bbl": st.column_config.NumberColumn("Oil Opex", format="$%.2f"),
-        "gas_opex_mcf": st.column_config.NumberColumn("Gas Opex", format="$%.2f"),
-        "ngl_opex": st.column_config.NumberColumn("NGL Opex", format="$%.2f"),
-        "fixed_loe": st.column_config.NumberColumn("Fixed LOE", format="$%,.0f"),
-        "ngl_yield": st.column_config.NumberColumn("NGL Yield", format="%.2f"),
-    },
-).copy()
-
-slot_df = st.data_editor(
-    slot_df_display,
-    num_rows="fixed",
-    use_container_width=True,
-    key="slot_editor",
-    column_config={
-        "slot_id": st.column_config.NumberColumn("Slot", format="%d", disabled=True),
-        "tc_name": st.column_config.SelectboxColumn("Type Curve", options=tc_names, required=True),
-        "gross_wells": st.column_config.NumberColumn("Gross Wells", format="%.2f"),
-        "net_acres": st.column_config.NumberColumn("Net Acres", format="%,.1f"),
-        "unit_acres": st.column_config.NumberColumn("Unit Acres", format="%,.0f"),
-        "use_calc_unit_acres": st.column_config.CheckboxColumn("Calc Unit Acres"),
-        "pct_unitized": st.column_config.NumberColumn("% Unitized", format="%.2f"),
-        "drilling_spud_month": st.column_config.DateColumn("Spud Month", format="YYYY-MM-DD"),
-        "flowback_delay": st.column_config.NumberColumn("Flowback Delay", format="%d"),
-        "net_revenue_interest": st.column_config.NumberColumn("NRI", format="%.2f"),
-        "lateral_length": st.column_config.NumberColumn("Lateral Length (ft)", format="%,d"),
-        "dc_costs": st.column_config.NumberColumn("D&C ($/ft)", format="$%,.0f"),
-        "tc_risk": st.column_config.NumberColumn("TC Risk", format="%.2f"),
-        "bid_per_acre": st.column_config.NumberColumn("$/Acre Bid", format="$%,d"),
-        "oil_diff": st.column_config.NumberColumn("Oil Diff", format="$%.2f"),
-        "gas_diff": st.column_config.NumberColumn("Gas Diff", format="$%.2f"),
-        "ngl_diff": None,
-        "oil_opex_bbl": st.column_config.NumberColumn("Oil Opex", format="$%.2f"),
-        "gas_opex_mcf": st.column_config.NumberColumn("Gas Opex", format="$%.2f"),
-        "ngl_opex": st.column_config.NumberColumn("NGL Opex", format="$%.2f"),
-        "fixed_loe": st.column_config.NumberColumn("Fixed LOE", format="$%,.0f"),
-        "ngl_yield": st.column_config.NumberColumn("NGL Yield", format="%.2f"),
-    },
-).copy()
-
 run_model_clicked = st.button("Run Model")
 
 slot_df = apply_calc_unit_acres(slot_df)
