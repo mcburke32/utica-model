@@ -799,42 +799,7 @@ def style_quarterly_output_table(display_df, row_styles):
         ], overwrite=False)
     )
 
-    return styler
-    
-        first_col = display_df.columns[0]
-        other_cols = list(display_df.columns[1:])
-    
-        styler = (
-            display_df.style
-            .apply(row_style, axis=1)
-            .set_properties(subset=[first_col], **{
-                "text-align": "left",
-                "white-space": "pre",
-            })
-            .set_properties(subset=other_cols, **{
-                "text-align": "right",
-            })
-            .set_table_styles([
-                {
-                    "selector": "thead th",
-                    "props": [
-                        ("background-color", QUARTERLY_HEADER_COLOR),
-                        ("color", "white"),
-                        ("font-weight", "700"),
-                        ("text-align", "center"),
-                    ],
-                },
-                {
-                    "selector": "tbody td",
-                    "props": [
-                        ("border", "1px solid #e6e6e6"),
-                    ],
-                },
-            ], overwrite=False)
-        )
-    
-        return styler
-    
+    return styler 
 
 def render_deal_highlight_box(title, value):
     st.markdown(
