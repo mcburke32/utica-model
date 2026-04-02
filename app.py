@@ -851,22 +851,11 @@ def style_quarterly_output_table(display_df, row_styles):
     first_col = display_df.columns[0]
     data_cols = list(display_df.columns[1:])
 
-    yearly_fill = "#CADEEE"  # RGB(202, 222, 238)
+    YEAR_FILL = "#CADEEE"  # RGB(202, 222, 238)
 
-    quarter_cols = [
-        c for c in data_cols
-        if str(c).startswith("Q")
-    ]
-
-    yearly_cols = [
-        c for c in data_cols
-        if str(c).isdigit()
-    ]
-
-    separator_cols = [
-        c for c in data_cols
-        if str(c).strip() == ""
-    ]
+    quarter_cols = [c for c in data_cols if str(c).startswith("Q")]
+    year_cols = [c for c in data_cols if str(c).isdigit()]
+    separator_cols = [c for c in data_cols if str(c).strip() == ""]
 
     def row_style(row):
         rtype = style_map.loc[row.name]
@@ -879,7 +868,9 @@ def style_quarterly_output_table(display_df, row_styles):
         elif rtype == "italic":
             styles = ["font-style: italic;"] * len(row)
         elif rtype == "footer":
-            styles = [f"background-color: {QUARTERLY_HEADER_COLOR}; color: white; font-weight: 700;"] * len(row)
+            styles = [
+                f"background-color: {QUARTERLY_HEADER_COLOR}; color: white; font-weight: 700;"
+            ] * len(row)
         elif rtype == "gap":
             styles = [""] * len(row)
 
@@ -892,14 +883,15 @@ def style_quarterly_output_table(display_df, row_styles):
         .set_properties(subset=[first_col], **{
             "text-align": "left",
             "white-space": "pre",
+            "background-color": "white",
         })
         .set_properties(subset=quarter_cols, **{
             "text-align": "right",
             "background-color": "white",
         })
-        .set_properties(subset=yearly_cols, **{
+        .set_properties(subset=year_cols, **{
             "text-align": "right",
-            "background-color": yearly_fill,
+            "background-color": YEAR_FILL,
         })
         .set_properties(subset=separator_cols, **{
             "background-color": "white",
@@ -945,11 +937,20 @@ def style_quarterly_output_table(display_df, row_styles):
                     ("text-align", "right"),
                 ],
             },
+            # force footer row to stay dark blue
+            {
+                "selector": f"tbody tr:nth-child({len(display_df)}) td",
+                "props": [
+                    ("background-color", QUARTERLY_HEADER_COLOR),
+                    ("color", "white"),
+                    ("font-weight", "700"),
+                ],
+            },
         ], overwrite=False)
     )
 
     return styler
-
+    
 def render_deal_highlight_box(title, value):
     st.markdown(
         f"""
