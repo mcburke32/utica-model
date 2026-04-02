@@ -823,6 +823,7 @@ def style_quarterly_output_table(display_df, row_styles):
     )
 
     return styler
+    
 def render_deal_highlight_box(title, value):
     st.markdown(
         f"""
