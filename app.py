@@ -754,7 +754,7 @@ def style_quarterly_output_table(display_df, row_styles):
         styles = [""] * len(row)
 
         if rtype == "section":
-            styles = ["font-weight: 700;"] + [""] * (len(row) - 1)
+            styles = ["font-weight: 700; text-align: left;"] + [""] * (len(row) - 1)
         elif rtype == "bold":
             styles = ["font-weight: 700;"] * len(row)
         elif rtype == "italic":
@@ -766,13 +766,13 @@ def style_quarterly_output_table(display_df, row_styles):
 
         return styles
 
-    # 👇 THIS MUST BE OUTSIDE row_style
     first_col = display_df.columns[0]
     other_cols = list(display_df.columns[1:])
 
     styler = (
         display_df.style
         .apply(row_style, axis=1)
+        .hide(axis="index")
         .set_properties(subset=[first_col], **{
             "text-align": "left",
             "white-space": "pre",
@@ -782,25 +782,47 @@ def style_quarterly_output_table(display_df, row_styles):
         })
         .set_table_styles([
             {
+                "selector": "table",
+                "props": [
+                    ("border-collapse", "collapse"),
+                    ("width", "100%"),
+                ],
+            },
+            {
                 "selector": "thead th",
                 "props": [
                     ("background-color", QUARTERLY_HEADER_COLOR),
                     ("color", "white"),
                     ("font-weight", "700"),
                     ("text-align", "center"),
+                    ("border", "1px solid #d9d9d9"),
+                    ("padding", "6px 10px"),
                 ],
             },
             {
                 "selector": "tbody td",
                 "props": [
                     ("border", "1px solid #e6e6e6"),
+                    ("padding", "6px 10px"),
+                ],
+            },
+            {
+                "selector": f"tbody td.col0",
+                "props": [
+                    ("text-align", "left"),
+                    ("white-space", "pre"),
+                ],
+            },
+            {
+                "selector": "tbody td:not(.col0)",
+                "props": [
+                    ("text-align", "right"),
                 ],
             },
         ], overwrite=False)
     )
 
-    return styler 
-
+    return styler
 def render_deal_highlight_box(title, value):
     st.markdown(
         f"""
