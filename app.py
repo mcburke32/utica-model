@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 from datetime import date
@@ -192,8 +193,7 @@ inject_app_css()
 st.title("Utica Deal Model")
 
 @st.cache_data
-
-def load_tc_names():
+def load_tc_names(file_mtime):
     tc_metadata = pd.read_excel("type_curve_library.xlsx", sheet_name="tc_metadata")
     tc_metadata["tc_name"] = tc_metadata["tc_name"].astype(str).str.strip()
     return tc_metadata["tc_name"].dropna().unique().tolist()
@@ -1532,9 +1532,10 @@ deal_inputs = {
 # -----------------------------
 st.subheader("Type Curve Assumptions")
 
-tc_names = ["Choose TC"] + load_tc_names()
+file_mtime = os.path.getmtime("type_curve_library.xlsx")
+tc_names = ["Choose TC"] + load_tc_names(file_mtime)
 
-col1, col2 = st.columns([3, 1])
+col1, col2, col3 = st.columns([2, 1, 1])
 
 with col1:
     num_slots = st.number_input(
@@ -1547,6 +1548,14 @@ with col1:
 with col2:
     st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
     load_slots_clicked = st.button("Load Slots", use_container_width=True)
+
+with col3:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    refresh_tc_clicked = st.button("Refresh Type Curves", use_container_width=True)
+
+if refresh_tc_clicked:
+    load_tc_names.clear()
+    st.rerun()
 
 if load_slots_clicked:
     st.session_state["slot_df"] = resize_slot_df(st.session_state["slot_df"], num_slots)
