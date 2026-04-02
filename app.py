@@ -9,7 +9,7 @@ from model import run_deal_model
 
 st.set_page_config(page_title="Utica Deal Model", layout="wide")
 st.title("Utica Deal Model")
-
+inject_app_css()
 
 # -----------------------------
 # Helpers
@@ -136,7 +136,14 @@ def format_thousands_short(x, decimals=1, prefix="$", suffix="k", zero_as_dash=T
 
     return f"({text})" if x < 0 else text
 
+QUARTERLY_HEADER_COLOR = "#4E80B1"   # RGB(78, 128, 177)
+BUTTON_DARK = "#2E4D6A"              # RGB(46, 77, 106)
+MONTHLY_BTN = "#C0D4E4"              # RGB(192, 212, 228)
+SENS_BTN = "#8AABCC"                 # RGB(138, 171, 204)
+YEAR_FILL = "#CADEEE"                # RGB(202, 222, 238)
+
 @st.cache_data
+
 def load_tc_names():
     tc_metadata = pd.read_excel("type_curve_library.xlsx", sheet_name="tc_metadata")
     tc_metadata["tc_name"] = tc_metadata["tc_name"].astype(str).str.strip()
@@ -699,7 +706,11 @@ def format_quarterly_output_table(df):
     return formatted
 
 
-QUARTERLY_HEADER_COLOR = "#4E80B1"  # RGB(78, 128, 177)
+QUARTERLY_HEADER_COLOR = "#4E80B1"   # RGB(78, 128, 177)
+BUTTON_DARK = "#2E4D6A"              # RGB(46, 77, 106)
+MONTHLY_BTN = "#C0D4E4"              # RGB(192, 212, 228)
+SENS_BTN = "#8AABCC"                 # RGB(138, 171, 204)
+YEAR_FILL = "#CADEEE"                # RGB(202, 222, 238)
 
 
 def build_quarterly_output_display_table(df):
@@ -844,14 +855,11 @@ def build_quarterly_output_display_table(df):
     display_df = pd.DataFrame(rows)
     return display_df, row_styles
 
-
 def style_quarterly_output_table(display_df, row_styles):
     style_map = pd.Series(row_styles, index=display_df.index)
 
     first_col = display_df.columns[0]
     data_cols = list(display_df.columns[1:])
-
-    YEAR_FILL = "#CADEEE"  # RGB(202, 222, 238)
 
     quarter_cols = [c for c in data_cols if str(c).startswith("Q")]
     year_cols = [c for c in data_cols if str(c).isdigit()]
@@ -868,9 +876,7 @@ def style_quarterly_output_table(display_df, row_styles):
         elif rtype == "italic":
             styles = ["font-style: italic;"] * len(row)
         elif rtype == "footer":
-            styles = [
-                f"background-color: {QUARTERLY_HEADER_COLOR}; color: white; font-weight: 700;"
-            ] * len(row)
+            styles = [f"background-color: {QUARTERLY_HEADER_COLOR}; color: white; font-weight: 700;"] * len(row)
         elif rtype == "gap":
             styles = [""] * len(row)
 
@@ -937,7 +943,6 @@ def style_quarterly_output_table(display_df, row_styles):
                     ("text-align", "right"),
                 ],
             },
-            # force footer row to stay dark blue
             {
                 "selector": f"tbody tr:nth-child({len(display_df)}) td",
                 "props": [
@@ -950,7 +955,161 @@ def style_quarterly_output_table(display_df, row_styles):
     )
 
     return styler
-    
+
+def build_tc_assumptions_output_display_table(slot_df):
+    df = slot_df.copy()
+
+    if df.empty:
+        return pd.DataFrame({"TC Assumptions": []}), []
+
+    df["drilling_spud_month"] = pd.to_datetime(df["drilling_spud_month"], errors="coerce")
+
+    display_cols = [f"Slot {int(s)}" for s in df["slot_id"]]
+
+    rows = []
+    row_styles = []
+
+    def add_section(label):
+        row = {"TC Assumptions": label}
+        for c in display_cols:
+            row[c] = ""
+        rows.append(row)
+        row_styles.append("section")
+
+    def add_gap():
+        row = {"TC Assumptions": ""}
+        for c in display_cols:
+            row[c] = ""
+        rows.append(row)
+        row_styles.append("gap")
+
+    def add_data(label, values, style="normal"):
+        row = {"TC Assumptions": label}
+        row.update(values)
+        rows.append(row)
+        row_styles.append(style)
+
+    slot_map = {}
+    for _, r in df.iterrows():
+        slot_name = f"Slot {int(r['slot_id'])}"
+        slot_map[slot_name] = r
+
+    def fmt_num(x, decimals=1, prefix="", suffix=""):
+        return format_accounting_number(x, decimals=decimals, prefix=prefix, suffix=suffix, null_as_blank=False)
+
+    def fmt_pct(x, decimals=0):
+        return format_accounting_percent(x, decimals=decimals, null_as_blank=False)
+
+    def fmt_date(x):
+        if pd.isnull(x):
+            return "-"
+        return pd.to_datetime(x).strftime("%Y-%m-%d")
+
+    add_section("Development")
+    add_data("Type Curve", {k: str(v["tc_name"]) for k, v in slot_map.items()})
+    add_data("Gross Wells", {k: fmt_num(v["gross_wells"], decimals=2) for k, v in slot_map.items()})
+    add_data("Net Acres", {k: fmt_num(v["net_acres"], decimals=1) for k, v in slot_map.items()})
+    add_data("Unit Acres", {k: fmt_num(v["unit_acres"], decimals=0) for k, v in slot_map.items()})
+    add_data("Calc Unit Acres", {k: "Yes" if bool(v["use_calc_unit_acres"]) else "No" for k, v in slot_map.items()})
+    add_data("% Unitized", {k: fmt_pct(v["pct_unitized"], decimals=0) for k, v in slot_map.items()})
+    add_data("Spud Month", {k: fmt_date(v["drilling_spud_month"]) for k, v in slot_map.items()})
+    add_data("Flowback Delay", {k: fmt_num(v["flowback_delay"], decimals=0) for k, v in slot_map.items()})
+    add_data("NRI", {k: fmt_pct(v["net_revenue_interest"], decimals=0) for k, v in slot_map.items()})
+    add_data("Lateral Length (ft)", {k: fmt_num(v["lateral_length"], decimals=0) for k, v in slot_map.items()})
+
+    add_gap()
+
+    add_section("Economics")
+    add_data("D&C ($/ft)", {k: fmt_num(v["dc_costs"], decimals=0, prefix="$") for k, v in slot_map.items()})
+    add_data("TC Risk", {k: fmt_pct(v["tc_risk"], decimals=0) for k, v in slot_map.items()})
+    add_data("$/Acre Bid", {k: fmt_num(v["bid_per_acre"], decimals=0, prefix="$") for k, v in slot_map.items()})
+    add_data("Oil Diff", {k: fmt_num(v["oil_diff"], decimals=2, prefix="$") for k, v in slot_map.items()})
+    add_data("Gas Diff", {k: fmt_num(v["gas_diff"], decimals=2, prefix="$") for k, v in slot_map.items()})
+
+    add_gap()
+
+    add_section("Operating Costs")
+    add_data("Oil Opex", {k: fmt_num(v["oil_opex_bbl"], decimals=2, prefix="$") for k, v in slot_map.items()})
+    add_data("Gas Opex", {k: fmt_num(v["gas_opex_mcf"], decimals=2, prefix="$") for k, v in slot_map.items()})
+    add_data("NGL Opex", {k: fmt_num(v["ngl_opex"], decimals=2, prefix="$") for k, v in slot_map.items()})
+    add_data("Fixed LOE", {k: fmt_num(v["fixed_loe"], decimals=0, prefix="$") for k, v in slot_map.items()})
+    add_data("NGL Yield", {k: fmt_num(v["ngl_yield"], decimals=2) for k, v in slot_map.items()}, style="footer")
+
+    display_df = pd.DataFrame(rows)
+    return display_df, row_styles
+
+
+def style_tc_assumptions_output_table(display_df, row_styles):
+    style_map = pd.Series(row_styles, index=display_df.index)
+
+    first_col = display_df.columns[0]
+    other_cols = list(display_df.columns[1:])
+
+    def row_style(row):
+        rtype = style_map.loc[row.name]
+        styles = [""] * len(row)
+
+        if rtype == "section":
+            styles = ["font-weight: 700; text-align: left;"] + [""] * (len(row) - 1)
+        elif rtype == "footer":
+            styles = [f"background-color: {QUARTERLY_HEADER_COLOR}; color: white; font-weight: 700;"] * len(row)
+        elif rtype == "gap":
+            styles = [""] * len(row)
+
+        return styles
+
+    styler = (
+        display_df.style
+        .apply(row_style, axis=1)
+        .hide(axis="index")
+        .set_properties(subset=[first_col], **{
+            "text-align": "left",
+            "white-space": "pre",
+            "background-color": "white",
+        })
+        .set_properties(subset=other_cols, **{
+            "text-align": "right",
+            "background-color": "white",
+        })
+        .set_table_styles([
+            {
+                "selector": "table",
+                "props": [
+                    ("border-collapse", "separate"),
+                    ("border-spacing", "0"),
+                    ("width", "100%"),
+                ],
+            },
+            {
+                "selector": "thead th",
+                "props": [
+                    ("background-color", QUARTERLY_HEADER_COLOR),
+                    ("color", "white"),
+                    ("font-weight", "700"),
+                    ("text-align", "center"),
+                    ("border", "none"),
+                    ("padding", "6px 10px"),
+                ],
+            },
+            {
+                "selector": "tbody td",
+                "props": [
+                    ("border", "none"),
+                    ("padding", "6px 10px"),
+                ],
+            },
+            {
+                "selector": "tbody td.col0",
+                "props": [
+                    ("text-align", "left"),
+                    ("white-space", "pre"),
+                ],
+            },
+        ], overwrite=False)
+    )
+
+    return styler
+
 def render_deal_highlight_box(title, value):
     st.markdown(
         f"""
@@ -1129,7 +1288,6 @@ deal_inputs = {
     "promote_irr_threshold": acreage_carry if promote_enabled else 0.0,
 }
 
-
 # -----------------------------
 # Slot controls
 # -----------------------------
@@ -1144,7 +1302,7 @@ with col1:
         "Number of Slots",
         min_value=1,
         step=1,
-        value=1
+        value=len(st.session_state["slot_df"]),
     )
 
 with col2:
@@ -1156,45 +1314,7 @@ if load_slots_clicked:
     st.session_state["model_has_run"] = False
 
 st.session_state["slot_df"] = apply_calc_unit_acres(st.session_state["slot_df"])
-
 slot_df_display = st.session_state["slot_df"]
-
-st.markdown(
-    f"""
-    <style>
-    div[data-testid="stDataEditor"] [role="columnheader"] {{
-        background: {QUARTERLY_HEADER_COLOR} !important;
-        background-color: {QUARTERLY_HEADER_COLOR} !important;
-        color: white !important;
-        font-weight: 700 !important;
-    }}
-
-    div[data-testid="stDataEditor"] [role="columnheader"] * {{
-        color: white !important;
-        fill: white !important;
-        font-weight: 700 !important;
-    }}
-
-    div[data-testid="stDataEditor"] thead th {{
-        background: {QUARTERLY_HEADER_COLOR} !important;
-        background-color: {QUARTERLY_HEADER_COLOR} !important;
-        color: white !important;
-        font-weight: 700 !important;
-    }}
-
-    div[data-testid="stDataEditor"] thead th * {{
-        color: white !important;
-        fill: white !important;
-        font-weight: 700 !important;
-    }}
-
-    div[data-testid="stDataEditor"] [role="gridcell"] {{
-        border-color: #e6e6e6 !important;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
 slot_df = st.data_editor(
     slot_df_display,
@@ -1589,5 +1709,16 @@ if (
                 "$/Acre Bid",
                 format_accounting_number(blended_bid, decimals=0, prefix="$")
             )
+            tc_output_display_df, tc_output_row_styles = build_tc_assumptions_output_display_table(slot_df)
+            tc_output_styler = style_tc_assumptions_output_table(
+                tc_output_display_df,
+                tc_output_row_styles,
+            )
+
+    with st.expander("TC Assumptions Output", expanded=False):
+        st.markdown(
+            tc_output_styler.to_html(),
+            unsafe_allow_html=True,
+        )
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
