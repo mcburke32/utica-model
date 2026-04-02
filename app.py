@@ -1169,79 +1169,164 @@ def render_deal_highlight_box(title, value):
         unsafe_allow_html=True,
     )
 
-def build_quarterly_fcf_chart(quarterly_output_df):
-    quarter_cols = [c for c in quarterly_output_df.columns if str(c).startswith("Q")]
-
-    fcf = quarterly_output_df.loc["Free Cash Flow", quarter_cols].astype(float)
-    cum_fcf = quarterly_output_df.loc["Cumulative FCF", quarter_cols].astype(float)
-
-    fig = go.Figure()
-
-    fig.add_bar(
-        x=quarter_cols,
-        y=fcf,
-        name="Free Cash Flow",
-    )
-
-    fig.add_scatter(
-        x=quarter_cols,
-        y=cum_fcf,
-        mode="lines+markers",
-        name="Cumulative FCF",
-        yaxis="y2",
-    )
-
-    fig.update_layout(
-        title="Quarterly Free Cash Flow",
-        xaxis=dict(title="Quarter"),
-        yaxis=dict(title="$ in Thousands"),
-        yaxis2=dict(
-            title="Cumulative FCF ($ in Thousands)",
-            overlaying="y",
-            side="right",
-            showgrid=False,
-        ),
-        legend=dict(orientation="h"),
-        height=450,
-    )
-
-    return fig
-
-
 def build_production_profile_chart(deal_df):
     df = deal_df.copy()
     df["date"] = pd.to_datetime(df["date"])
 
+    # Limit chart through 2040-12-31
+    df = df[df["date"] <= pd.Timestamp("2040-12-31")].copy()
+
     fig = go.Figure()
 
-    fig.add_scatter(
+    fig.add_trace(go.Scatter(
         x=df["date"],
         y=df["slot_net_oil_production"],
         mode="lines",
         name="Oil",
-    )
+        stackgroup="one",
+        hovertemplate="Date: %{x|%Y-%m-%d}<br>Oil: %{y:,.1f}<extra></extra>",
+    ))
 
-    fig.add_scatter(
-        x=df["date"],
-        y=df["slot_net_gas_production"],
-        mode="lines",
-        name="Gas",
-    )
-
-    fig.add_scatter(
+    fig.add_trace(go.Scatter(
         x=df["date"],
         y=df["slot_net_ngl_production"],
         mode="lines",
         name="NGL",
-    )
+        stackgroup="one",
+        hovertemplate="Date: %{x|%Y-%m-%d}<br>NGL: %{y:,.1f}<extra></extra>",
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=df["date"],
+        y=df["slot_net_gas_production"],
+        mode="lines",
+        name="Gas",
+        stackgroup="one",
+        hovertemplate="Date: %{x|%Y-%m-%d}<br>Gas: %{y:,.1f}<extra></extra>",
+    ))
 
     fig.update_layout(
         title="Production Profile",
-        xaxis=dict(title="Date"),
+        xaxis=dict(
+            title="Date",
+            tickformat="%Y",
+            dtick="M12",
+        ),
         yaxis=dict(title="Net Production"),
-        legend=dict(orientation="h"),
-        height=450,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+        ),
+        height=500,
+        margin=dict(l=40, r=40, t=70, b=40),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
     )
+
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)")
+
+    return fig
+
+
+def build_cumulative_fcf_chart(quarterly_output_df):
+    quarter_cols = [c for c in quarterly_output_df.columns if str(c).startswith("Q")]
+
+    cum_fcf = quarterly_output_df.loc["Cumulative FCF", quarter_cols].astype(float)
+
+    # Convert Q labels like "Q1 26" into real quarter-end dates for cleaner spacing
+    quarter_dates = []
+    for q in quarter_cols:
+        q_num = int(q[1])
+        yy = int(q[-2:])
+        year = 2000 + yy
+        quarter_end_month = {1: 3, 2: 6, 3: 9, 4: 12}[q_num]
+        quarter_dates.append(pd.Timestamp(year=year, month=quarter_end_month, day=1) + pd.offsets.MonthEnd(0))
+
+    chart_df = pd.DataFrame({
+        "quarter": quarter_cols,
+        "date": quarter_dates,
+        "cum_fcf": cum_fcf.values,
+    })
+
+    # Compute approximate payback by linear interpolation where cumulative FCF crosses 0
+    payback_years = None
+    payback_date = None
+
+    for i in range(1, len(chart_df)):
+        prev_val = chart_df.loc[i - 1, "cum_fcf"]
+        curr_val = chart_df.loc[i, "cum_fcf"]
+
+        if prev_val < 0 <= curr_val:
+            prev_date = chart_df.loc[i - 1, "date"]
+            curr_date = chart_df.loc[i, "date"]
+
+            if curr_val == prev_val:
+                frac = 0
+            else:
+                frac = (0 - prev_val) / (curr_val - prev_val)
+
+            payback_date = prev_date + (curr_date - prev_date) * frac
+
+            start_date = chart_df.loc[0, "date"]
+            payback_years = (payback_date - start_date).days / 365.25
+            break
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=chart_df["date"],
+        y=chart_df["cum_fcf"],
+        mode="lines",
+        name="Cumulative FCF",
+        fill="tozeroy",
+        hovertemplate="Date: %{x|%Y-%m-%d}<br>Cumulative FCF: %{y:,.1f}<extra></extra>",
+    ))
+
+    # Zero line
+    fig.add_hline(y=0, line_width=1, line_dash="dash", line_color="gray")
+
+    # Payback callout
+    if payback_date is not None and payback_years is not None:
+        fig.add_trace(go.Scatter(
+            x=[payback_date],
+            y=[0],
+            mode="markers+text",
+            text=[f"Payback = {payback_years:.1f} years"],
+            textposition="top center",
+            name="Payback",
+            hovertemplate=f"Payback Date: {payback_date:%Y-%m-%d}<br>Payback: {payback_years:.1f} years<extra></extra>",
+        ))
+
+        fig.add_vline(x=payback_date, line_width=1, line_dash="dot", line_color="gray")
+
+    fig.update_layout(
+        title="Cumulative Free Cash Flow",
+        xaxis=dict(
+            title="Date",
+            tickformat="%Y",
+            dtick="M12",
+        ),
+        yaxis=dict(title="$ in Thousands"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+        ),
+        height=500,
+        margin=dict(l=40, r=40, t=70, b=40),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        showlegend=False,
+    )
+
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)")
 
     return fig
 
