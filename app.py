@@ -145,7 +145,10 @@ def inject_app_css():
     st.markdown(
         f"""
         <style>
-        /* Main buttons */
+
+        /* =========================
+           PRIMARY BUTTONS (dark blue)
+        ========================== */
         div[data-testid="stButton"] button {{
             background-color: {BUTTON_DARK} !important;
             color: white !important;
@@ -169,7 +172,24 @@ def inject_app_css():
             box-shadow: none !important;
         }}
 
-        /* Download buttons */
+        /* =========================
+           REFRESH TYPE CURVES BUTTON (light blue override)
+        ========================== */
+        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"]:nth-of-type(3) button {{
+            background-color: {MONTHLY_BTN} !important;
+            color: #1f2d3d !important;
+            border: 1px solid {MONTHLY_BTN} !important;
+            font-weight: 700 !important;
+        }}
+
+        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"]:nth-of-type(3) button:hover {{
+            background-color: {MONTHLY_BTN} !important;
+            filter: brightness(1.05) !important;
+        }}
+
+        /* =========================
+           DOWNLOAD BUTTON (monthly data)
+        ========================== */
         div[data-testid="stDownloadButton"] button {{
             background-color: {MONTHLY_BTN} !important;
             color: #1f2d3d !important;
@@ -180,10 +200,74 @@ def inject_app_css():
 
         div[data-testid="stDownloadButton"] button:hover {{
             background-color: {MONTHLY_BTN} !important;
-            color: #1f2d3d !important;
-            border: 1px solid {MONTHLY_BTN} !important;
             filter: brightness(1.03) !important;
         }}
+
+        /* =========================
+           EXPANDERS
+        ========================== */
+
+        /* Base style */
+        div[data-testid="stExpander"] summary {{
+            border-radius: 10px !important;
+            font-weight: 700 !important;
+            padding: 8px 12px !important;
+        }}
+
+        /* Monthly Data */
+        div[data-testid="stExpander"]:nth-of-type(1) summary {{
+            background-color: {MONTHLY_BTN} !important;
+            color: #1f2d3d !important;
+        }}
+
+        /* Sensitivities */
+        div[data-testid="stExpander"]:nth-of-type(2) summary,
+        div[data-testid="stExpander"]:nth-of-type(3) summary,
+        div[data-testid="stExpander"]:nth-of-type(4) summary,
+        div[data-testid="stExpander"]:nth-of-type(5) summary {{
+            background-color: {SENS_BTN} !important;
+            color: #102030 !important;
+        }}
+
+        /* Quarterly + TC + Charts */
+        div[data-testid="stExpander"]:nth-of-type(6) summary,
+        div[data-testid="stExpander"]:nth-of-type(7) summary,
+        div[data-testid="stExpander"]:nth-of-type(8) summary {{
+            background-color: {QUARTERLY_HEADER_COLOR} !important;
+            color: white !important;
+        }}
+
+        /* =========================
+           DATA EDITOR HEADER
+        ========================== */
+        div[data-testid="stDataEditor"] [role="columnheader"] {{
+            background-color: {QUARTERLY_HEADER_COLOR} !important;
+            color: white !important;
+            font-weight: 700 !important;
+        }}
+
+        div[data-testid="stDataEditor"] [role="columnheader"] * {{
+            color: white !important;
+            fill: white !important;
+            font-weight: 700 !important;
+        }}
+
+        div[data-testid="stDataEditor"] thead th {{
+            background-color: {QUARTERLY_HEADER_COLOR} !important;
+            color: white !important;
+            font-weight: 700 !important;
+        }}
+
+        div[data-testid="stDataEditor"] thead th * {{
+            color: white !important;
+            fill: white !important;
+            font-weight: 700 !important;
+        }}
+
+        div[data-testid="stDataEditor"] [role="gridcell"] {{
+            border-color: #e6e6e6 !important;
+        }}
+
         </style>
         """,
         unsafe_allow_html=True,
