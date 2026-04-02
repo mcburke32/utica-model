@@ -1128,6 +1128,29 @@ st.session_state["slot_df"] = apply_calc_unit_acres(st.session_state["slot_df"])
 
 slot_df_display = st.session_state["slot_df"]
 
+st.markdown(
+    f"""
+    <style>
+    div[data-testid="stDataEditor"] thead th {{
+        background-color: {QUARTERLY_HEADER_COLOR} !important;
+        color: white !important;
+        font-weight: 700 !important;
+        border-color: #d9d9d9 !important;
+    }}
+
+    div[data-testid="stDataEditor"] thead th * {{
+        color: white !important;
+        font-weight: 700 !important;
+    }}
+
+    div[data-testid="stDataEditor"] tbody td {{
+        border-color: #e6e6e6 !important;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 slot_df = st.data_editor(
     slot_df_display,
     num_rows="fixed",
