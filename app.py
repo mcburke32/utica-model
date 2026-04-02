@@ -1137,15 +1137,19 @@ st.subheader("Type Curve Assumptions")
 
 tc_names = ["Choose TC"] + load_tc_names()
 
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([3, 1])
 
 with col1:
-    num_slots = st.number_input("Number of Slots", min_value=1, step=1, value=1)
+    num_slots = st.number_input(
+        "Number of Slots",
+        min_value=1,
+        step=1,
+        value=1
+    )
 
 with col2:
-    st.write("")
-    st.write("")
-    load_slots_clicked = st.button("Load Slots")
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    load_slots_clicked = st.button("Load Slots", use_container_width=True)
 
 if load_slots_clicked:
     st.session_state["slot_df"] = resize_slot_df(st.session_state["slot_df"], num_slots)
