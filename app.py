@@ -1558,9 +1558,9 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
 
     
     tc_legend_items = [
-        ("TC Risk 90%", 0.90),
+        ("TC Risk 80%", 0.80),
         ("TC Risk 100%", 1.00),
-        ("TC Risk 110%", 1.10),
+        ("TC Risk 120%", 1.20),
     ]
     
     for label, risk in tc_legend_items:
