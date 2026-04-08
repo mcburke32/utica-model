@@ -2325,53 +2325,34 @@ if (
 
     st.subheader("Outputs")
     
+    tc_output_display_df, tc_output_row_styles = build_tc_assumptions_output_display_table(slot_df)
+    tc_output_styler = style_tc_assumptions_output_table(
+        tc_output_display_df,
+        tc_output_row_styles,
+    )
+    
     quarterly_output_df = build_quarterly_output_table(
         deal_df=deal_df,
         all_slots_df=all_slots_df,
         slot_df=slot_df,
         deal_inputs=deal_inputs,
     )
-
+    
     quarterly_output_display_df, quarterly_row_styles = build_quarterly_output_display_table(quarterly_output_df)
     quarterly_output_styler = style_quarterly_output_table(
         quarterly_output_display_df,
         quarterly_row_styles,
     )
-
+    
     with st.expander("TC Assumptions Output", expanded=False):
         st.markdown(tc_output_styler.to_html(), unsafe_allow_html=True)
-
-    cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
-    
-    cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
-
-    with st.expander("Charts", expanded=False):
-        chart_tab1, chart_tab2, chart_tab3 = st.tabs(
-            ["Cumulative FCF", "Production", "Scenario Matrix"]
-        )
-    
-        with chart_tab1:
-            st.plotly_chart(cum_fcf_chart, use_container_width=True)
-    
-        with chart_tab2:
-            prod_chart_view = st.radio(
-                "Production Chart View",
-                ["Stacked BOE/d", "Stream Split"],
-                horizontal=True,
-                key="prod_chart_view",
-            )
-            prod_chart = build_production_profile_chart(deal_df, chart_view=prod_chart_view)
-            st.plotly_chart(prod_chart, use_container_width=True)
-    
-        with chart_tab3:
-            st.plotly_chart(scenario_scatter_chart, use_container_width=True)
     
     with st.expander("Quarterly Output", expanded=False):
         st.markdown(quarterly_output_styler.to_html(), unsafe_allow_html=True)
-
+    
         st.markdown("### Deal Highlights")
         h1, h2, h3, h4 = st.columns(4)
-
+    
         with h1:
             render_deal_highlight_box(
                 "IRR",
@@ -2392,12 +2373,6 @@ if (
                 "$/Acre Bid",
                 format_accounting_number(blended_bid, decimals=0, prefix="$"),
             )
-
-    tc_output_display_df, tc_output_row_styles = build_tc_assumptions_output_display_table(slot_df)
-    tc_output_styler = style_tc_assumptions_output_table(
-        tc_output_display_df,
-        tc_output_row_styles,
-    )
 
     st.subheader("Email Draft Export")
     
