@@ -1231,37 +1231,34 @@ def build_cumulative_fcf_chart(deal_df, slot_df):
             .sum()
             .sort_values("drilling_spud_month")
         )
-
+    
         for _, row in spud_summary.iterrows():
             spud_date = row["drilling_spud_month"]
             gross_wells = row["gross_wells"]
-
-            # wider / more visible vertical rectangle
+    
             x0 = spud_date
             x1 = spud_date + pd.offsets.MonthEnd(1)
-
+    
+            # 🔹 Soft shaded band (no outline)
             fig.add_vrect(
                 x0=x0,
                 x1=x1,
-                fillcolor="rgba(78, 128, 177, 0.28)",
-                line_width=3,
-                line_color="rgba(78, 128, 177, 0.65)",
+                fillcolor="rgba(78, 128, 177, 0.18)",  # softer fill
+                line_width=0,  # removes harsh border
                 layer="below",
             )
-
-            # write out Gross Wells instead of GW
+    
+            # 🔹 Move Gross Wells LOWER so it never conflicts with payback
             fig.add_annotation(
                 x=spud_date + pd.Timedelta(days=14),
-                y=1.03,
+                y=0.90,                 # lower than top → avoids overlap
                 yref="paper",
                 text=f"{gross_wells:.1f} Gross Wells",
                 showarrow=False,
-                font=dict(size=13, color="black"),
+                font=dict(size=11, color="black"),
                 bgcolor="rgba(255,255,255,0)",
-                bordercolor="rgba(0,0,0,0)",
-                borderwidth=0,
             )
-
+            
     if payback_date is not None and payback_years is not None:
         fig.add_vline(
             x=payback_date,
