@@ -294,6 +294,10 @@ def run_single_slot_economics(slot, type_curve_library, global_assumptions, slot
             "local_oil_price": [oil_price + oil_diff],
             "local_gas_price": [gas_price + gas_diff],
             "local_ngl_price": [oil_price * float(slot_ngl["ngl_pct_of_wti"])],
+            "oil_revenue": [0.0],
+            "gas_revenue": [0.0],
+            "ngl_revenue": [0.0],
+            "total_revenue": [0.0],
             "net_revenue": [0.0],
             "opex": [0.0],
             "variable_loe": [0.0],
@@ -302,7 +306,6 @@ def run_single_slot_economics(slot, type_curve_library, global_assumptions, slot
             "tax": [0.0],
         }
     )
-
     df = pd.concat(
         [
             period_0,
