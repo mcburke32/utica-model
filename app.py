@@ -1461,9 +1461,9 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     }
 
     size_map = {
-        0.90: 10,
-        1.00: 15,
-        1.10: 20,
+        0.90: 8,
+        1.00: 14,
+        1.10: 22,
     }
 
     dc_label_map = {
