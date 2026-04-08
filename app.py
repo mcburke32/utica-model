@@ -2436,5 +2436,18 @@ if (
             key="download_email_html",
         )
 
+import plotly.express as px
+
+fig = px.line(x=[1,2,3], y=[1,4,9])
+
+img_bytes = fig.to_image(format="png")
+
+st.download_button(
+    "Download Test Image",
+    data=img_bytes,
+    file_name="test.png",
+    mime="image/png"
+)
+
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
