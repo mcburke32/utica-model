@@ -1399,9 +1399,9 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     bid_values = build_sensitivity_range(base_bid, 500.0, 3)
 
     dc_cases = [
-        ("Low", base_dc - 100.0),
+        ("Low", base_dc - 50.0),
         ("Base", base_dc),
-        ("High", base_dc + 100.0),
+        ("High", base_dc + 50.0),
     ]
     
     tc_risk_values = [0.80, 1.00, 1.20]
@@ -1461,9 +1461,9 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     }
 
     size_map = {
-        0.90: 8,
+        0.80: 8,
         1.00: 14,
-        1.10: 22,
+        1.20: 22,
     }
 
     dc_label_map = {
