@@ -1439,15 +1439,9 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     chart_df = chart_df[pd.notnull(chart_df["irr"])].copy()
 
     color_map = {
-        "Low D&C": "#6AA84F",
-        "Base D&C": "#1F4E79",
-        "High D&C": "#C0504D",
-    }
-
-    symbol_map = {
-        "Low D&C": "circle",
-        "Base D&C": "diamond",
-        "High D&C": "square",
+        "Low D&C": "#6BAED6",   # light blue
+        "Base D&C": "#1F4E79",  # strong navy
+        "High D&C": "#9ECAE1",  # very light blue
     }
 
     size_map = {
@@ -1487,16 +1481,15 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
                 go.Scatter(
                     x=dc_df["bid"],
                     y=dc_df["irr"],
-                    mode="markers",
+                    mode="markers+lines",
                     name=dc_case,
                     legendgroup=dc_case,
                     showlegend=show_legend,
                     marker=dict(
                         color=color_map[dc_case],
-                        symbol=symbol_map[dc_case],
                         size=marker_sizes,
-                        line=dict(color="white", width=0.8),
-                        opacity=0.80,
+                        line=dict(color="white", width=0.5),
+                        opacity=0.75,
                     ),
                     hovertemplate=(
                         "Bid: $%{x:,.0f}"
