@@ -1516,10 +1516,12 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
             legend_seen.add(dc_case)
 
     # highlight current/base point
+    base_tc_risk = round(float(slot_df["tc_risk"].mean()), 2)
+    
     base_points = chart_df[
         (chart_df["pricing_case"] == "Base")
         & (chart_df["dc_case"] == "Base D&C")
-        & (chart_df["tc_risk"].round(2) == float(slot_df["tc_risk"].mean()).round(2))
+        & (chart_df["tc_risk"].round(2) == base_tc_risk)
         & (chart_df["bid"] == base_bid)
     ].copy()
 
