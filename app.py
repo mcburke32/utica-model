@@ -1486,9 +1486,9 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     panel_col_map = {"Downside": 1, "Base": 2, "Upside": 3}
     legend_seen = set()
     tc_jitter = {
-        0.90: -125,
+        0.90: -250,
         1.00: 0,
-        1.10: 125,
+        1.10: 250,
     }
     
     for pricing_name in ["Downside", "Base", "Upside"]:
