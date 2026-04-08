@@ -1248,8 +1248,8 @@ def build_production_profile_chart(deal_df, chart_view="Stacked BOE/d"):
             traceorder="normal",
             entrywidth=140,
             entrywidthmode="pixels",
+        )
     )
-
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)")
 
