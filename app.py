@@ -4,6 +4,7 @@ from io import BytesIO
 
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit as st
 
 from model import run_deal_model
@@ -1377,161 +1378,206 @@ def build_cumulative_fcf_chart(deal_df, slot_df):
 
     return fig
 
-def build_efficient_frontier_chart(slot_df, deal_inputs, dc_case="Base D&C"):
-    base_bid = (
-        deal_inputs["bid_override"]
-        if deal_inputs["use_bid_override"]
-        else float(slot_df["bid_per_acre"].mean())
-    )
+@st.cache_data(show_spinner=False)
+def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
+    bid_values = build_sensitivity_range(base_bid, 500.0, 3)
 
-    bid_values = build_sensitivity_range(base_bid, 500.0, 5)
+    dc_cases = [
+        ("Low D&C", base_dc - 50.0),
+        ("Base D&C", base_dc),
+        ("High D&C", base_dc + 50.0),
+    ]
 
-    base_dc = (
-        float(deal_inputs["dc_override"])
-        if deal_inputs["use_dc_override"]
-        else float(slot_df["dc_costs"].mean())
-    )
-
-    if dc_case == "Low D&C":
-        dc_value = base_dc - 50.0
-    elif dc_case == "High D&C":
-        dc_value = base_dc + 50.0
-    else:
-        dc_value = base_dc
+    tc_risk_values = [0.80, 1.00, 1.20]
 
     base_oil = float(deal_inputs["oil_price"])
     base_gas = float(deal_inputs["gas_price"])
 
-    scenario_defs = [
-        {"name": "Outer Low", "oil_price": max(0.0, base_oil - 10.0), "gas_price": max(0.0, base_gas - 1.00)},
-        {"name": "Inner Low", "oil_price": max(0.0, base_oil - 5.0),  "gas_price": max(0.0, base_gas - 0.50)},
-        {"name": "Base",      "oil_price": base_oil,                    "gas_price": base_gas},
-        {"name": "Inner High","oil_price": base_oil + 5.0,              "gas_price": base_gas + 0.50},
-        {"name": "Outer High","oil_price": base_oil + 10.0,             "gas_price": base_gas + 1.00},
+    pricing_cases = [
+        ("Downside", max(0.0, base_oil - 5.0), max(0.0, base_gas - 0.50)),
+        ("Base", base_oil, base_gas),
+        ("Upside", base_oil + 5.0, base_gas + 0.50),
     ]
 
-    frontier_df = pd.DataFrame(index=bid_values)
+    rows = []
 
-    for scenario in scenario_defs:
-        irr_vals = []
+    for pricing_name, oil_price, gas_price in pricing_cases:
+        for dc_label, dc_value in dc_cases:
+            for tc_risk in tc_risk_values:
+                for bid in bid_values:
+                    sens_inputs = deal_inputs.copy()
+                    sens_inputs["oil_price"] = float(oil_price)
+                    sens_inputs["gas_price"] = float(gas_price)
+                    sens_inputs["use_bid_override"] = True
+                    sens_inputs["bid_override"] = float(bid)
+                    sens_inputs["use_dc_override"] = True
+                    sens_inputs["dc_override"] = float(dc_value)
 
-        for bid in bid_values:
-            sens_inputs = deal_inputs.copy()
-            sens_inputs["use_bid_override"] = True
-            sens_inputs["bid_override"] = float(bid)
-            sens_inputs["oil_price"] = float(scenario["oil_price"])
-            sens_inputs["gas_price"] = float(scenario["gas_price"])
-            sens_inputs["use_dc_override"] = True
-            sens_inputs["dc_override"] = float(dc_value)
+                    sens_slot_df = slot_df.copy()
+                    sens_slot_df["tc_risk"] = float(tc_risk)
 
-            try:
-                _, _, _, _, irr, _ = run_deal_model(slot_df.copy(), sens_inputs)
-                irr_vals.append(irr if irr is not None else None)
-            except Exception:
-                irr_vals.append(None)
+                    try:
+                        _, _, _, _, irr, moic = run_deal_model(sens_slot_df, sens_inputs)
+                    except Exception:
+                        irr, moic = None, None
 
-        frontier_df[scenario["name"]] = irr_vals
+                    rows.append(
+                        {
+                            "pricing_case": pricing_name,
+                            "oil_price": oil_price,
+                            "gas_price": gas_price,
+                            "dc_case": dc_label,
+                            "dc_value": dc_value,
+                            "tc_risk": tc_risk,
+                            "bid": bid,
+                            "irr": irr,
+                            "moic": moic,
+                        }
+                    )
 
-    fig = go.Figure()
+    chart_df = pd.DataFrame(rows)
+    chart_df = chart_df[pd.notnull(chart_df["irr"])].copy()
 
-    # Outer band
-    fig.add_trace(
-        go.Scatter(
-            x=frontier_df.index,
-            y=frontier_df["Outer Low"],
-            mode="lines",
-            line=dict(color="rgba(191, 214, 234, 0.15)", width=1),
-            hovertemplate="Bid: $%{x:,.0f}<br>Outer Low IRR: %{y:.1%}<extra></extra>",
-            name="Pricing Band ±2",
-            showlegend=False,
-        )
+    color_map = {
+        "Low D&C": "#6AA84F",
+        "Base D&C": "#1F4E79",
+        "High D&C": "#C0504D",
+    }
+
+    symbol_map = {
+        "Low D&C": "circle",
+        "Base D&C": "diamond",
+        "High D&C": "square",
+    }
+
+    size_map = {
+        0.80: 10,
+        1.00: 15,
+        1.20: 20,
+    }
+
+    fig = make_subplots(
+        rows=1,
+        cols=3,
+        shared_yaxes=True,
+        horizontal_spacing=0.06,
+        subplot_titles=[
+            f"Downside<br><sup>Oil ${pricing_cases[0][1]:.0f} / Gas ${pricing_cases[0][2]:.2f}</sup>",
+            f"Base<br><sup>Oil ${pricing_cases[1][1]:.0f} / Gas ${pricing_cases[1][2]:.2f}</sup>",
+            f"Upside<br><sup>Oil ${pricing_cases[2][1]:.0f} / Gas ${pricing_cases[2][2]:.2f}</sup>",
+        ],
     )
 
-    fig.add_trace(
-        go.Scatter(
-            x=frontier_df.index,
-            y=frontier_df["Outer High"],
-            mode="lines",
-            line=dict(color="rgba(191, 214, 234, 0.15)", width=1),
-            fill="tonexty",
-            fillcolor="rgba(191, 214, 234, 0.45)",
-            hovertemplate="Bid: $%{x:,.0f}<br>Outer High IRR: %{y:.1%}<extra></extra>",
-            name="Pricing Band ±2 Steps",
-        )
-    )
+    panel_col_map = {"Downside": 1, "Base": 2, "Upside": 3}
+    legend_seen = set()
 
-    # Inner band
-    fig.add_trace(
-        go.Scatter(
-            x=frontier_df.index,
-            y=frontier_df["Inner Low"],
-            mode="lines",
-            line=dict(color="rgba(78, 128, 177, 0.20)", width=1),
-            hovertemplate="Bid: $%{x:,.0f}<br>Inner Low IRR: %{y:.1%}<extra></extra>",
-            name="Pricing Band ±1",
-            showlegend=False,
-        )
-    )
+    for pricing_name in ["Downside", "Base", "Upside"]:
+        panel_df = chart_df[chart_df["pricing_case"] == pricing_name].copy()
+        col_num = panel_col_map[pricing_name]
 
-    fig.add_trace(
-        go.Scatter(
-            x=frontier_df.index,
-            y=frontier_df["Inner High"],
-            mode="lines",
-            line=dict(color="rgba(78, 128, 177, 0.20)", width=1),
-            fill="tonexty",
-            fillcolor="rgba(78, 128, 177, 0.30)",
-            hovertemplate="Bid: $%{x:,.0f}<br>Inner High IRR: %{y:.1%}<extra></extra>",
-            name="Pricing Band ±1 Step",
-        )
-    )
+        for dc_case in ["Low D&C", "Base D&C", "High D&C"]:
+            dc_df = panel_df[panel_df["dc_case"] == dc_case].copy()
+            if dc_df.empty:
+                continue
 
-    # Base line
-    fig.add_trace(
-        go.Scatter(
-            x=frontier_df.index,
-            y=frontier_df["Base"],
-            mode="lines+markers",
-            line=dict(color="#1f4e79", width=3),
-            marker=dict(size=7, color="#1f4e79"),
-            hovertemplate="Bid: $%{x:,.0f}<br>Base IRR: %{y:.1%}<extra></extra>",
-            name="Base Pricing",
-        )
-    )
+            marker_sizes = [size_map.get(float(x), 14) for x in dc_df["tc_risk"]]
+            show_legend = dc_case not in legend_seen
 
-    # Highlight current/base bid
-    if base_bid in frontier_df.index:
-        base_irr = frontier_df.loc[base_bid, "Base"]
-        if pd.notnull(base_irr):
             fig.add_trace(
                 go.Scatter(
-                    x=[base_bid],
-                    y=[base_irr],
+                    x=dc_df["bid"],
+                    y=dc_df["irr"],
                     mode="markers",
-                    marker=dict(size=11, color="#C00000", symbol="diamond"),
-                    hovertemplate="Current Bid: $%{x:,.0f}<br>IRR: %{y:.1%}<extra></extra>",
-                    name="Current Bid",
-                )
+                    name=dc_case,
+                    legendgroup=dc_case,
+                    showlegend=show_legend,
+                    marker=dict(
+                        color=color_map[dc_case],
+                        symbol=symbol_map[dc_case],
+                        size=marker_sizes,
+                        line=dict(color="white", width=0.8),
+                        opacity=0.80,
+                    ),
+                    hovertemplate=(
+                        "Bid: $%{x:,.0f}"
+                        "<br>IRR: %{y:.1%}"
+                        "<br>D&C: " + dc_case +
+                        "<br>TC Risk: %{customdata[0]:.0%}"
+                        "<br>Oil: $%{customdata[1]:.0f}"
+                        "<br>Gas: $%{customdata[2]:.2f}"
+                        "<extra></extra>"
+                    ),
+                    customdata=dc_df[["tc_risk", "oil_price", "gas_price"]].values,
+                ),
+                row=1,
+                col=col_num,
             )
 
-    tc_risk_label = f"{float(slot_df['tc_risk'].mean()):.0%}"
+            legend_seen.add(dc_case)
+
+    # highlight current/base point
+    base_points = chart_df[
+        (chart_df["pricing_case"] == "Base")
+        & (chart_df["dc_case"] == "Base D&C")
+        & (chart_df["tc_risk"].round(2) == float(slot_df["tc_risk"].mean()).round(2))
+        & (chart_df["bid"] == base_bid)
+    ].copy()
+
+    if base_points.empty:
+        base_points = chart_df[
+            (chart_df["pricing_case"] == "Base")
+            & (chart_df["dc_case"] == "Base D&C")
+            & (chart_df["tc_risk"].round(2) == 1.00)
+            & (chart_df["bid"] == base_bid)
+        ].copy()
+
+    if not base_points.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=base_points["bid"],
+                y=base_points["irr"],
+                mode="markers",
+                name="Current Base Point",
+                marker=dict(
+                    color="#C00000",
+                    symbol="x",
+                    size=18,
+                    line=dict(color="#C00000", width=2),
+                ),
+                hovertemplate="Current Base Point<br>Bid: $%{x:,.0f}<br>IRR: %{y:.1%}<extra></extra>",
+            ),
+            row=1,
+            col=2,
+        )
+
+    for c in [1, 2, 3]:
+        fig.update_xaxes(
+            title_text="$/Acre Bid",
+            tickprefix="$",
+            tickformat=",.0f",
+            showgrid=False,
+            row=1,
+            col=c,
+        )
+
+    fig.update_yaxes(
+        title_text="IRR",
+        tickformat=".0%",
+        showgrid=True,
+        gridcolor="rgba(0,0,0,0.08)",
+        row=1,
+        col=1,
+    )
 
     fig.update_layout(
         title=(
-            "IRR Efficient Frontier"
-            f"<br><sup>D&C Case: {dc_case} (${dc_value:,.0f}/ft) | "
-            f"TC Risk: {tc_risk_label} | "
-            "Inner band = ±1 price step | Outer band = ±2 price steps</sup>"
+            "Scenario Matrix: IRR vs. $/Acre Bid"
+            "<br><sup>Color/Symbol = D&C Case | Marker Size = TC Risk</sup>"
         ),
-        xaxis=dict(
-            title="$/Acre Bid",
-            tickprefix="$",
-            tickformat=",.0f",
-        ),
-        yaxis=dict(
-            title="IRR",
-            tickformat=".0%",
-        ),
+        height=560,
+        margin=dict(l=50, r=30, t=95, b=40),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -1539,17 +1585,9 @@ def build_efficient_frontier_chart(slot_df, deal_inputs, dc_case="Base D&C"):
             xanchor="left",
             x=0,
         ),
-        height=500,
-        margin=dict(l=40, r=40, t=90, b=40),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
     )
 
-    fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)")
-
     return fig
-
 # -----------------------------
 # Session state init
 # -----------------------------
@@ -1933,6 +1971,13 @@ if (
     base_dc = deal_inputs["dc_override"] if deal_inputs["use_dc_override"] else float(slot_df["dc_costs"].mean())
     base_bid = deal_inputs["bid_override"] if deal_inputs["use_bid_override"] else float(slot_df["bid_per_acre"].mean())
 
+    scenario_scatter_chart = build_scenario_scatter_chart(
+        slot_df=slot_df,
+        deal_inputs=deal_inputs,
+        base_bid=base_bid,
+        base_dc=base_dc,
+    )
+    
     irr_sens_df, moic_sens_df = run_bid_dc_sensitivity(
         slot_df=slot_df,
         deal_inputs=deal_inputs,
@@ -2141,7 +2186,7 @@ if (
     
     with st.expander("Charts", expanded=False):
         chart_tab1, chart_tab2, chart_tab3 = st.tabs(
-            ["Cumulative FCF", "Production", "Efficient Frontier"]
+            ["Cumulative FCF", "Production", "Scenario Matrix"]
         )
     
         with chart_tab1:
@@ -2158,20 +2203,7 @@ if (
             st.plotly_chart(prod_chart, use_container_width=True)
     
         with chart_tab3:
-            dc_case = st.radio(
-                "D&C Case",
-                ["Low D&C", "Base D&C", "High D&C"],
-                horizontal=True,
-                key="frontier_dc_case",
-            )
-        
-            frontier_chart = build_efficient_frontier_chart(
-                slot_df,
-                deal_inputs,
-                dc_case=dc_case,
-            )
-        
-            st.plotly_chart(frontier_chart, use_container_width=True)
+            st.plotly_chart(scenario_scatter_chart, use_container_width=True)
 
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
