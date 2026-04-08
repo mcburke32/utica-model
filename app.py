@@ -1455,11 +1455,7 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
         cols=3,
         shared_yaxes=True,
         horizontal_spacing=0.06,
-        subplot_titles=[
-            f"Downside<br><sup>Oil ${pricing_cases[0][1]:.0f} / Gas ${pricing_cases[0][2]:.2f}</sup>",
-            f"Base<br><sup>Oil ${pricing_cases[1][1]:.0f} / Gas ${pricing_cases[1][2]:.2f}</sup>",
-            f"Upside<br><sup>Oil ${pricing_cases[2][1]:.0f} / Gas ${pricing_cases[2][2]:.2f}</sup>",
-        ],
+        subplot_titles=["Downside", "Base", "Upside"],
     )
 
     panel_col_map = {"Downside": 1, "Base": 2, "Upside": 3}
@@ -1481,7 +1477,7 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
                 go.Scatter(
                     x=dc_df["bid"],
                     y=dc_df["irr"],
-                    mode="markers+lines",
+                    mode="markers",
                     name=dc_case,
                     legendgroup=dc_case,
                     showlegend=show_legend,
@@ -1489,7 +1485,7 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
                         color=color_map[dc_case],
                         size=marker_sizes,
                         line=dict(color="white", width=0.5),
-                        opacity=0.75,
+                        opacity=0.70,
                     ),
                     hovertemplate=(
                         "Bid: $%{x:,.0f}"
@@ -1534,10 +1530,10 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
                 mode="markers",
                 name="Current Base Point",
                 marker=dict(
-                    color="#C00000",
-                    symbol="x",
+                    color="#1F4E79",
                     size=18,
-                    line=dict(color="#C00000", width=2),
+                    line=dict(color="black", width=2),
+                    opacity=1.0,
                 ),
                 hovertemplate="Current Base Point<br>Bid: $%{x:,.0f}<br>IRR: %{y:.1%}<extra></extra>",
             ),
@@ -1567,7 +1563,7 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     fig.update_layout(
         title=(
             "Scenario Matrix: IRR vs. $/Acre Bid"
-            "<br><sup>Color/Symbol = D&C Case | Marker Size = TC Risk</sup>"
+            "<br><sup>Downside / Base / Upside reflect paired oil and gas pricing changes | Color = D&C | Marker Size = TC Risk</sup>"
         ),
         height=560,
         margin=dict(l=50, r=30, t=95, b=40),
@@ -1576,7 +1572,7 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1.02,
+            y=1.05,
             xanchor="left",
             x=0,
         ),
