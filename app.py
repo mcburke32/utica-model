@@ -1966,7 +1966,14 @@ if (
         st.markdown(tc_output_styler.to_html(), unsafe_allow_html=True)
 
     cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
-    prod_chart = build_production_profile_chart(deal_df)
+    prod_chart_view = st.radio(
+        "Production Chart View",
+        ["Stacked BOE/d", "Stream Split"],
+        horizontal=True,
+        key="prod_chart_view",
+    )
+    
+    prod_chart = build_production_profile_chart(deal_df, chart_view=prod_chart_view)
 
     with st.expander("Charts", expanded=False):
         chart_tab1, chart_tab2 = st.tabs(["Cumulative FCF", "Production"])
