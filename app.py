@@ -1505,8 +1505,6 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
                 col=col_num,
             )
 
-        legend_seen.add(dc_case)
-
             legend_seen.add(dc_case)
 
     base_tc_risk = round(float(slot_df["tc_risk"].mean()), 2)
