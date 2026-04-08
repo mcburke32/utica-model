@@ -1131,39 +1131,50 @@ def build_production_profile_chart(deal_df):
     df["date"] = pd.to_datetime(df["date"])
     df = df[df["date"] <= pd.Timestamp("2040-12-31")].copy()
 
+    # Convert all volumes to BOE
+    df["net_oil_boe"] = df["slot_net_oil_production"]
+    df["net_ngl_boe"] = df["slot_net_ngl_production"]
+    df["net_gas_boe"] = df["slot_net_gas_production"] / 6.0
+
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
-        x=df["date"],
-        y=df["slot_net_oil_production"],
-        mode="lines",
-        name="Oil",
-        stackgroup="one",
-        hovertemplate="Date: %{x|%Y-%m-%d}<br>Oil: %{y:,.1f}<extra></extra>",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=df["date"],
+            y=df["net_oil_boe"],
+            mode="lines",
+            name="Oil",
+            stackgroup="one",
+            hovertemplate="Date: %{x|%Y-%m-%d}<br>Net Oil: %{y:,.1f} BOE<extra></extra>",
+        )
+    )
 
-    fig.add_trace(go.Scatter(
-        x=df["date"],
-        y=df["slot_net_ngl_production"],
-        mode="lines",
-        name="NGL",
-        stackgroup="one",
-        hovertemplate="Date: %{x|%Y-%m-%d}<br>NGL: %{y:,.1f}<extra></extra>",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=df["date"],
+            y=df["net_ngl_boe"],
+            mode="lines",
+            name="NGL",
+            stackgroup="one",
+            hovertemplate="Date: %{x|%Y-%m-%d}<br>Net NGL: %{y:,.1f} BOE<extra></extra>",
+        )
+    )
 
-    fig.add_trace(go.Scatter(
-        x=df["date"],
-        y=df["slot_net_gas_production"],
-        mode="lines",
-        name="Gas",
-        stackgroup="one",
-        hovertemplate="Date: %{x|%Y-%m-%d}<br>Gas: %{y:,.1f}<extra></extra>",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=df["date"],
+            y=df["net_gas_boe"],
+            mode="lines",
+            name="Gas",
+            stackgroup="one",
+            hovertemplate="Date: %{x|%Y-%m-%d}<br>Net Gas: %{y:,.1f} BOE<extra></extra>",
+        )
+    )
 
     fig.update_layout(
-        title="Production Profile",
+        title="Net Production Profile",
         xaxis=dict(title="Date", tickformat="%Y", dtick="M12"),
-        yaxis=dict(title="Net Production"),
+        yaxis=dict(title="Net Production (BOE)"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
         height=500,
         margin=dict(l=40, r=40, t=70, b=40),
