@@ -1172,7 +1172,7 @@ def build_production_profile_chart(deal_df):
     )
 
     fig.update_layout(
-        title="Net Production Profile",
+        title="Net Production Profile (BOE)",
         xaxis=dict(title="Date", tickformat="%Y", dtick="M12"),
         yaxis=dict(title="Net Production (BOE)"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
