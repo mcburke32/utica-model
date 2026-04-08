@@ -1479,11 +1479,11 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
         rows=1,
         cols=3,
         shared_yaxes=True,
-        horizontal_spacing=0.06,
+        horizontal_spacing=0.08,
         subplot_titles=[
-            f"Downside (Oil ${pricing_cases[0][1]:.0f} / Gas ${pricing_cases[0][2]:.2f})",
-            f"Base (Oil ${pricing_cases[1][1]:.0f} / Gas ${pricing_cases[1][2]:.2f})",
-            f"Upside (Oil ${pricing_cases[2][1]:.0f} / Gas ${pricing_cases[2][2]:.2f})",
+            f"Downside (Oil ${pricing_cases[0][1]:.0f}  /  Gas ${pricing_cases[0][2]:.2f})",
+            f"Base (Oil ${pricing_cases[1][1]:.0f}  /  Gas ${pricing_cases[1][2]:.2f})",
+            f"Upside (Oil ${pricing_cases[2][1]:.0f}  /  Gas ${pricing_cases[2][2]:.2f})",
         ]
     )
     panel_col_map = {"Downside": 1, "Base": 2, "Upside": 3}
@@ -1657,7 +1657,10 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
         title_font=dict(color="black"),
     )
     
-    fig.update_annotations(font=dict(size=14, color="black"))
+    fig.update_annotations(
+        font=dict(size=16, color="black"),
+        align="center"
+    )
     
     return fig
 
