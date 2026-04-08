@@ -1126,55 +1126,106 @@ def render_deal_highlight_box(title, value):
     )
 
 
-def build_production_profile_chart(deal_df):
+def build_production_profile_chart(deal_df, chart_view="Stacked BOE/d"):
     df = deal_df.copy()
     df["date"] = pd.to_datetime(df["date"])
     df = df[df["date"] <= pd.Timestamp("2040-12-31")].copy()
 
-    # Convert all volumes to BOE
-    df["net_oil_boe"] = df["slot_net_oil_production"]
-    df["net_ngl_boe"] = df["slot_net_ngl_production"]
-    df["net_gas_boe"] = df["slot_net_gas_production"] / 6.0
+    # Convert monthly net volumes to BOE/d
+    df["days_in_month"] = df["date"].dt.days_in_month
+    df["net_oil_boe_d"] = df["slot_net_oil_production"] / df["days_in_month"]
+    df["net_ngl_boe_d"] = df["slot_net_ngl_production"] / df["days_in_month"]
+    df["net_gas_boe_d"] = (df["slot_net_gas_production"] / 6.0) / df["days_in_month"]
+
+    # Optional total line if you ever want it later
+    df["total_boe_d"] = (
+        df["net_oil_boe_d"] + df["net_ngl_boe_d"] + df["net_gas_boe_d"]
+    )
 
     fig = go.Figure()
 
-    fig.add_trace(
-        go.Scatter(
-            x=df["date"],
-            y=df["net_oil_boe"],
-            mode="lines",
-            name="Oil",
-            stackgroup="one",
-            hovertemplate="Date: %{x|%Y-%m-%d}<br>Net Oil: %{y:,.1f} BOE<extra></extra>",
-        )
-    )
+    oil_color = "#1f4e79"
+    ngl_color = "#4e80b1"
+    gas_color = "#b7cde3"
 
-    fig.add_trace(
-        go.Scatter(
-            x=df["date"],
-            y=df["net_ngl_boe"],
-            mode="lines",
-            name="NGL",
-            stackgroup="one",
-            hovertemplate="Date: %{x|%Y-%m-%d}<br>Net NGL: %{y:,.1f} BOE<extra></extra>",
+    if chart_view == "Stacked BOE/d":
+        fig.add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["net_oil_boe_d"],
+                mode="lines",
+                name="Oil",
+                stackgroup="one",
+                line=dict(color=oil_color, width=1.5),
+                hovertemplate="Date: %{x|%Y-%m-%d}<br>Net Oil: %{y:,.1f} BOE/d<extra></extra>",
+            )
         )
-    )
 
-    fig.add_trace(
-        go.Scatter(
-            x=df["date"],
-            y=df["net_gas_boe"],
-            mode="lines",
-            name="Gas",
-            stackgroup="one",
-            hovertemplate="Date: %{x|%Y-%m-%d}<br>Net Gas: %{y:,.1f} BOE<extra></extra>",
+        fig.add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["net_ngl_boe_d"],
+                mode="lines",
+                name="NGL",
+                stackgroup="one",
+                line=dict(color=ngl_color, width=1.5),
+                hovertemplate="Date: %{x|%Y-%m-%d}<br>Net NGL: %{y:,.1f} BOE/d<extra></extra>",
+            )
         )
-    )
+
+        fig.add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["net_gas_boe_d"],
+                mode="lines",
+                name="Gas",
+                stackgroup="one",
+                line=dict(color=gas_color, width=1.5),
+                hovertemplate="Date: %{x|%Y-%m-%d}<br>Net Gas: %{y:,.1f} BOE/d<extra></extra>",
+            )
+        )
+
+        chart_title = "Net Production Profile (BOE/d)"
+    else:
+        fig.add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["net_oil_boe_d"],
+                mode="lines",
+                name="Oil",
+                line=dict(color=oil_color, width=3),
+                hovertemplate="Date: %{x|%Y-%m-%d}<br>Net Oil: %{y:,.1f} BOE/d<extra></extra>",
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["net_ngl_boe_d"],
+                mode="lines",
+                name="NGL",
+                line=dict(color=ngl_color, width=3),
+                hovertemplate="Date: %{x|%Y-%m-%d}<br>Net NGL: %{y:,.1f} BOE/d<extra></extra>",
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["net_gas_boe_d"],
+                mode="lines",
+                name="Gas",
+                line=dict(color=gas_color, width=3),
+                hovertemplate="Date: %{x|%Y-%m-%d}<br>Net Gas: %{y:,.1f} BOE/d<extra></extra>",
+            )
+        )
+
+        chart_title = "Net Production Stream Split (BOE/d)"
 
     fig.update_layout(
-        title="Net Production Profile (BOE)",
+        title=chart_title,
         xaxis=dict(title="Date", tickformat="%Y", dtick="M12"),
-        yaxis=dict(title="Net Production (BOE)"),
+        yaxis=dict(title="Net Production (BOE/d)"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
         height=500,
         margin=dict(l=40, r=40, t=70, b=40),
@@ -1186,7 +1237,6 @@ def build_production_profile_chart(deal_df):
     fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)")
 
     return fig
-
 
 def build_cumulative_fcf_chart(deal_df, slot_df):
     df = deal_df.copy()
