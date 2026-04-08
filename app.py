@@ -1383,20 +1383,20 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     bid_values = build_sensitivity_range(base_bid, 500.0, 3)
 
     dc_cases = [
-        ("Low D&C", base_dc - 50.0),
-        ("Base D&C", base_dc),
-        ("High D&C", base_dc + 50.0),
+        ("Low", base_dc - 100.0),
+        ("Base", base_dc),
+        ("High", base_dc + 100.0),
     ]
-
-    tc_risk_values = [0.80, 1.00, 1.20]
+    
+    tc_risk_values = [0.90, 1.00, 1.10]
 
     base_oil = float(deal_inputs["oil_price"])
     base_gas = float(deal_inputs["gas_price"])
 
     pricing_cases = [
-        ("Downside", max(0.0, base_oil - 5.0), max(0.0, base_gas - 0.50)),
+        ("Downside", max(0.0, base_oil - 5.0), max(0.0, base_gas - 0.25)),
         ("Base", base_oil, base_gas),
-        ("Upside", base_oil + 5.0, base_gas + 0.50),
+        ("Upside", base_oil + 5.0, base_gas + 0.25),
     ]
 
     rows = []
@@ -1439,15 +1439,15 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     chart_df = chart_df[pd.notnull(chart_df["irr"])].copy()
 
     color_map = {
-        "Low D&C": "#6BAED6",   # light blue
-        "Base D&C": "#1F4E79",  # strong navy
-        "High D&C": "#9ECAE1",  # very light blue
+        "Low": "#6AA84F",
+        "Base": "#1F4E79",
+        "High": "#C0504D",
     }
 
     size_map = {
-        0.80: 10,
+        0.90: 10,
         1.00: 15,
-        1.20: 20,
+        1.10: 20,
     }
 
     fig = make_subplots(
@@ -1455,8 +1455,11 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
         cols=3,
         shared_yaxes=True,
         horizontal_spacing=0.06,
-        subplot_titles=["Downside", "Base", "Upside"],
-    )
+        subplot_titles=[
+            f"Downside (${pricing_cases[0][1]:.0f} / ${pricing_cases[0][2]:.2f})",
+            f"Base (${pricing_cases[1][1]:.0f} / ${pricing_cases[1][2]:.2f})",
+            f"Upside (${pricing_cases[2][1]:.0f} / ${pricing_cases[2][2]:.2f})",
+        ],
 
     panel_col_map = {"Downside": 1, "Base": 2, "Upside": 3}
     legend_seen = set()
@@ -1465,12 +1468,17 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
         panel_df = chart_df[chart_df["pricing_case"] == pricing_name].copy()
         col_num = panel_col_map[pricing_name]
 
-        for dc_case in ["Low D&C", "Base D&C", "High D&C"]:
+        for dc_case in ["Low", "Base", "High"]:
             dc_df = panel_df[panel_df["dc_case"] == dc_case].copy()
             if dc_df.empty:
                 continue
 
             marker_sizes = [size_map.get(float(x), 14) for x in dc_df["tc_risk"]]
+            dc_label_map = {
+                "Low": f"Low (${base_dc - 100.0:,.0f}/ft)",
+                "Base": f"Base (${base_dc:,.0f}/ft)",
+                "High": f"High (${base_dc + 100.0:,.0f}/ft)",
+            }
             show_legend = dc_case not in legend_seen
 
             fig.add_trace(
@@ -1478,8 +1486,8 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
                     x=dc_df["bid"],
                     y=dc_df["irr"],
                     mode="markers",
-                    name=dc_case,
-                    legendgroup=dc_case,
+                    name=dc_label_map[dc_case],
+                    legendgroup=f"dc_{dc_case}",
                     showlegend=show_legend,
                     marker=dict(
                         color=color_map[dc_case],
@@ -1504,22 +1512,22 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
 
             legend_seen.add(dc_case)
 
-    # highlight current/base point
     base_tc_risk = round(float(slot_df["tc_risk"].mean()), 2)
+    base_bid_rounded = round(float(base_bid), 2)
     
     base_points = chart_df[
         (chart_df["pricing_case"] == "Base")
-        & (chart_df["dc_case"] == "Base D&C")
+        & (chart_df["dc_case"] == "Base")
         & (chart_df["tc_risk"].round(2) == base_tc_risk)
-        & (chart_df["bid"] == base_bid)
+        & (chart_df["bid"].round(2) == base_bid_rounded)
     ].copy()
-
+    
     if base_points.empty:
         base_points = chart_df[
             (chart_df["pricing_case"] == "Base")
-            & (chart_df["dc_case"] == "Base D&C")
+            & (chart_df["dc_case"] == "Base")
             & (chart_df["tc_risk"].round(2) == 1.00)
-            & (chart_df["bid"] == base_bid)
+            & (chart_df["bid"].round(2) == base_bid_rounded)
         ].copy()
 
     if not base_points.empty:
@@ -1540,7 +1548,33 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
             row=1,
             col=2,
         )
-
+    
+    tc_legend_items = [
+        ("TC Risk 90%", 0.90),
+        ("TC Risk 100%", 1.00),
+        ("TC Risk 110%", 1.10),
+    ]
+    
+    for label, risk in tc_legend_items:
+        fig.add_trace(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                name=label,
+                legendgroup="tc_risk",
+                showlegend=True,
+                marker=dict(
+                    color="rgba(120,120,120,0.85)",
+                    size=size_map[risk],
+                    line=dict(color="white", width=0.5),
+                ),
+                hoverinfo="skip",
+            ),
+            row=1,
+            col=1,
+        )
+    
     for c in [1, 2, 3]:
         fig.update_xaxes(
             title_text="$/Acre Bid",
@@ -1563,18 +1597,20 @@ def build_scenario_scatter_chart(slot_df, deal_inputs, base_bid, base_dc):
     fig.update_layout(
         title=(
             "Scenario Matrix: IRR vs. $/Acre Bid"
-            "<br><sup>Downside / Base / Upside reflect paired oil and gas pricing changes | Color = D&C | Marker Size = TC Risk</sup>"
+            "<br><sup>Color = D&C | Marker Size = TC Risk</sup>"
         ),
-        height=560,
-        margin=dict(l=50, r=30, t=95, b=40),
+        height=700,
+        margin=dict(l=50, r=30, t=95, b=150),
         plot_bgcolor="white",
         paper_bgcolor="white",
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.05,
-            xanchor="left",
-            x=0,
+            yanchor="top",
+            y=-0.18,
+            xanchor="center",
+            x=0.5,
+            title_text="",
+            tracegroupgap=12,
         ),
     )
 
