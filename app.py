@@ -1965,22 +1965,19 @@ if (
     with st.expander("TC Assumptions Output", expanded=False):
         st.markdown(tc_output_styler.to_html(), unsafe_allow_html=True)
 
-    cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
-    prod_chart_view = st.radio(
-        "Production Chart View",
-        ["Stacked BOE/d", "Stream Split"],
-        horizontal=True,
-        key="prod_chart_view",
-    )
-    
-    prod_chart = build_production_profile_chart(deal_df, chart_view=prod_chart_view)
-
     with st.expander("Charts", expanded=False):
         chart_tab1, chart_tab2 = st.tabs(["Cumulative FCF", "Production"])
         with chart_tab1:
             st.plotly_chart(cum_fcf_chart, use_container_width=True)
         with chart_tab2:
+            prod_chart_view = st.radio(
+                "Production Chart View",
+                ["Stacked BOE/d", "Stream Split"],
+                horizontal=True,
+                key="prod_chart_view",
+            )
+            prod_chart = build_production_profile_chart(deal_df, chart_view=prod_chart_view)
             st.plotly_chart(prod_chart, use_container_width=True)
-
+    
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
