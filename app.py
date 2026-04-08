@@ -2138,7 +2138,6 @@ if (
         st.markdown(tc_output_styler.to_html(), unsafe_allow_html=True)
 
     cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
-    frontier_chart = build_efficient_frontier_chart(slot_df, deal_inputs)
     
     with st.expander("Charts", expanded=False):
         chart_tab1, chart_tab2, chart_tab3 = st.tabs(
