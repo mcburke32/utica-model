@@ -2374,6 +2374,8 @@ if (
                 format_accounting_number(blended_bid, decimals=0, prefix="$"),
             )
 
+    cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
+    
     st.subheader("Email Draft Export")
     
     opportunity_name = st.text_input(
