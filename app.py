@@ -2131,7 +2131,7 @@ frontier_chart = build_efficient_frontier_chart(slot_df, deal_inputs)
         with chart_tab3:
             st.plotly_chart(frontier_chart, use_container_width=True)
     
-    frontier_chart = build_efficient_frontier_chart(slot_df, deal_inputs)
+
 
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
