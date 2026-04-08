@@ -12,7 +12,7 @@ from model import run_deal_model
 st.set_page_config(page_title="Utica Deal Model", layout="wide")
 
 
-# -----------------------------
+# ----------------------------- 
 # Helpers
 # -----------------------------
 def pretty_column_name(col):
