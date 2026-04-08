@@ -1377,6 +1377,146 @@ def build_cumulative_fcf_chart(deal_df, slot_df):
 
     return fig
 
+def build_efficient_frontier_chart(slot_df, deal_inputs):
+    base_bid = (
+        deal_inputs["bid_override"]
+        if deal_inputs["use_bid_override"]
+        else float(slot_df["bid_per_acre"].mean())
+    )
+
+    bid_values = build_sensitivity_range(base_bid, 500.0, 5)
+
+    # Simple commodity scenario set
+    scenario_defs = [
+        {
+            "name": "Downside",
+            "oil_price": max(0.0, deal_inputs["oil_price"] - 5.0),
+            "gas_price": max(0.0, deal_inputs["gas_price"] - 0.50),
+        },
+        {
+            "name": "Base",
+            "oil_price": deal_inputs["oil_price"],
+            "gas_price": deal_inputs["gas_price"],
+        },
+        {
+            "name": "Upside",
+            "oil_price": deal_inputs["oil_price"] + 5.0,
+            "gas_price": deal_inputs["gas_price"] + 0.50,
+        },
+    ]
+
+    frontier_df = pd.DataFrame(index=bid_values)
+
+    for scenario in scenario_defs:
+        irr_vals = []
+
+        for bid in bid_values:
+            sens_inputs = deal_inputs.copy()
+            sens_inputs["use_bid_override"] = True
+            sens_inputs["bid_override"] = float(bid)
+            sens_inputs["oil_price"] = float(scenario["oil_price"])
+            sens_inputs["gas_price"] = float(scenario["gas_price"])
+
+            try:
+                _, _, _, _, irr, _ = run_deal_model(slot_df.copy(), sens_inputs)
+                irr_vals.append(irr if irr is not None else None)
+            except Exception:
+                irr_vals.append(None)
+
+        frontier_df[scenario["name"]] = irr_vals
+
+    fig = go.Figure()
+
+    # Downside line (hidden in legend fill setup)
+    fig.add_trace(
+        go.Scatter(
+            x=frontier_df.index,
+            y=frontier_df["Downside"],
+            mode="lines",
+            line=dict(color="rgba(158, 202, 225, 0.2)", width=1),
+            hovertemplate="Bid: $%{x:,.0f}<br>Downside IRR: %{y:.1%}<extra></extra>",
+            name="Downside",
+            showlegend=False,
+        )
+    )
+
+    # Upside line with fill down to downside
+    fig.add_trace(
+        go.Scatter(
+            x=frontier_df.index,
+            y=frontier_df["Upside"],
+            mode="lines",
+            line=dict(color="rgba(158, 202, 225, 0.2)", width=1),
+            fill="tonexty",
+            fillcolor="rgba(78, 128, 177, 0.20)",
+            hovertemplate="Bid: $%{x:,.0f}<br>Upside IRR: %{y:.1%}<extra></extra>",
+            name="Pricing Range",
+        )
+    )
+
+    # Base case line
+    fig.add_trace(
+        go.Scatter(
+            x=frontier_df.index,
+            y=frontier_df["Base"],
+            mode="lines+markers",
+            line=dict(color="#1f4e79", width=3),
+            marker=dict(size=7, color="#1f4e79"),
+            hovertemplate="Bid: $%{x:,.0f}<br>Base IRR: %{y:.1%}<extra></extra>",
+            name="Base Case",
+        )
+    )
+
+    # Highlight current/base bid
+    if base_bid in frontier_df.index:
+        base_irr = frontier_df.loc[base_bid, "Base"]
+        if pd.notnull(base_irr):
+            fig.add_trace(
+                go.Scatter(
+                    x=[base_bid],
+                    y=[base_irr],
+                    mode="markers",
+                    marker=dict(size=11, color="#C00000", symbol="diamond"),
+                    hovertemplate="Current Bid: $%{x:,.0f}<br>IRR: %{y:.1%}<extra></extra>",
+                    name="Current Bid",
+                )
+            )
+
+    dc_label = (
+        f"${deal_inputs['dc_override']:,.0f}/ft"
+        if deal_inputs["use_dc_override"]
+        else f"${float(slot_df['dc_costs'].mean()):,.0f}/ft avg"
+    )
+    tc_risk_label = f"{float(slot_df['tc_risk'].mean()):.0%}"
+
+    fig.update_layout(
+        title=f"IRR Efficient Frontier<br><sup>D&C: {dc_label} | TC Risk: {tc_risk_label} | Pricing band = downside to upside</sup>",
+        xaxis=dict(
+            title="$/Acre Bid",
+            tickprefix="$",
+            tickformat=",.0f",
+        ),
+        yaxis=dict(
+            title="IRR",
+            tickformat=".0%",
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+        ),
+        height=500,
+        margin=dict(l=40, r=40, t=90, b=40),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+    )
+
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)")
+
+    return fig
 
 # -----------------------------
 # Session state init
@@ -1967,10 +2107,17 @@ if (
 
     cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
     
+cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
+frontier_chart = build_efficient_frontier_chart(slot_df, deal_inputs)
+
     with st.expander("Charts", expanded=False):
-        chart_tab1, chart_tab2 = st.tabs(["Cumulative FCF", "Production"])
+        chart_tab1, chart_tab2, chart_tab3 = st.tabs(
+            ["Cumulative FCF", "Production", "Efficient Frontier"]
+        )
+    
         with chart_tab1:
             st.plotly_chart(cum_fcf_chart, use_container_width=True)
+    
         with chart_tab2:
             prod_chart_view = st.radio(
                 "Production Chart View",
@@ -1981,5 +2128,10 @@ if (
             prod_chart = build_production_profile_chart(deal_df, chart_view=prod_chart_view)
             st.plotly_chart(prod_chart, use_container_width=True)
     
+        with chart_tab3:
+            st.plotly_chart(frontier_chart, use_container_width=True)
+    
+    frontier_chart = build_efficient_frontier_chart(slot_df, deal_inputs)
+
 else:
     st.info("Set your deal assumptions and slot inputs, then click Run Model.")
