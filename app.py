@@ -1765,7 +1765,7 @@ if (
         base_y=base_bid,
     )
 
-    with st.expander(r"D&C Costs ($/ft) vs. $/Acre Bid Sensitivity", expanded=True):
+    with st.expander(r"D&C Costs (\$/ft) vs. \$/Acre Bid Sensitivity", expanded=True):
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### IRR Sensitivity")
@@ -1773,8 +1773,8 @@ if (
         with col2:
             st.markdown("### MOIC Sensitivity")
             st.plotly_chart(moic_heatmap, use_container_width=True)
-
-    with st.expander("Oil Price vs. $/Acre Bid Sensitivity", expanded=False):
+    
+    with st.expander(r"Oil Price vs. \$/Acre Bid Sensitivity", expanded=False):
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### IRR Sensitivity")
