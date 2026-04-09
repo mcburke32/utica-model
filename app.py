@@ -2380,6 +2380,30 @@ if (
             )
 
     cum_fcf_chart = build_cumulative_fcf_chart(deal_df, slot_df)
+
+    with st.expander("Charts", expanded=False):
+        chart_tab1, chart_tab2, chart_tab3 = st.tabs(
+            ["Cumulative FCF", "Production", "Scenario Matrix"]
+        )
+    
+        with chart_tab1:
+            st.plotly_chart(cum_fcf_chart, use_container_width=True)
+    
+        with chart_tab2:
+            prod_chart_view = st.radio(
+                "Production Chart View",
+                ["Stacked BOE/d", "Stream Split"],
+                horizontal=True,
+                key="prod_chart_view",
+            )
+            prod_chart = build_production_profile_chart(
+                deal_df,
+                chart_view=prod_chart_view,
+            )
+            st.plotly_chart(prod_chart, use_container_width=True)
+    
+        with chart_tab3:
+            st.plotly_chart(scenario_scatter_chart, use_container_width=True)
     
     st.subheader("Email Draft Export")
     
